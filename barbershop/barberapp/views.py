@@ -2,7 +2,7 @@ from django.shortcuts import render
 from .models import Service, Booking, GalleryImage
 
 def home(request):
-    return render(request, 'home.html')
+    return render(request, 'barberapp/home.html')
 
 def booking(request):
     services = Service.objects.all()

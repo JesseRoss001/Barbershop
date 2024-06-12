@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="hero">
+    <div class="container-max">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1>Welcome to Our Barber Shop</h1>
+                <p class="lead">Your new destination for premium barber services. Book an appointment today and transform your style!</p>
+                <a href="{% url 'booking' %}" class="btn btn-primary">Book Now</a>
+            </div>
+            <div class="col-md-6">
+                <img src="{% static 'images/barber_shop_front.jpg' %}" class="img-fluid" alt="Barber Shop">
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container-max">
+    <p class="text-center">Discover our top-notch services and experienced staff.</p>
+</div>
+{% endblock %}
