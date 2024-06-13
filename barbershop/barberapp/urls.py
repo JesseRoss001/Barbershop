@@ -3,8 +3,9 @@ from . import views
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('booking/', views.booking, name='booking'),
+    path('booking/', views.book_view, name='booking'),
+    path('submit_booking/', views.submit_booking, name='submit_booking'),  # Ensure this line is added
     path('gallery/', views.gallery, name='gallery'),
-    path('about/', views.about, name='about'),  # New URL for the about page
-    path('blog/', views.blog, name='blog'),     # New URL for the blog page
+    path('about/', views.about, name='about'),
+    path('blog/', views.blog, name='blog'),
 ]

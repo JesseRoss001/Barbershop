@@ -1,0 +1,20 @@
+{% extends 'admin/base_site.html' %}
+{% block content %}
+<h1>Admin Dashboard</h1>
+<table>
+    <tr>
+        <th>Client Name</th>
+        <th>Service</th>
+        <th>Date/Time</th>
+        <th>Contact</th>
+    </tr>
+    {% for booking in bookings %}
+    <tr>
+        <td>{{ booking.client_name }}</td>
+        <td>{{ booking.service.name }}</td>
+        <td>{{ booking.date_time }}</td>
+        <td>{{ booking.client_contact }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

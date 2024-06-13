@@ -1,18 +1,26 @@
 from django.db import models
-from django.contrib.auth.models import User
 
 class Service(models.Model):
     name = models.CharField(max_length=100)
-    price = models.DecimalField(max_digits=6, decimal_places=2)
-    duration = models.IntegerField(help_text="Duration in minutes")
+    duration = models.DurationField(help_text="Duration of the service")
+
+class Staff(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+
+class BusinessHours(models.Model):
+    day_of_week = models.IntegerField(help_text="0 = Monday, 6 = Sunday")
+    open_time = models.TimeField()
+    close_time = models.TimeField()
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
 
 class Booking(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    client_name = models.CharField(max_length=100)
+    client_contact = models.CharField(max_length=100)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    date = models.DateField()
-    time = models.TimeField()
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    date_time = models.DateTimeField()
 
 class GalleryImage(models.Model):
     image = models.ImageField(upload_to='gallery/')
     caption = models.CharField(max_length=255, blank=True)
-
