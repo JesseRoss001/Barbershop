@@ -2,73 +2,104 @@
 {% load static %}
 {% block content %}
 <style>
-    .hero {
-        background: url('{% static 'images/barber-hero-small.jpg' %}') top center / cover no-repeat;
-        color: var(--font-color);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        min-height: 50vh; /* Default for small devices */
+    .carousel-item {
+        min-height: 75vh; /* Adjusted for better coverage */
+        background-size: cover;
+        background-position: center;
+    }
+
+    .carousel-caption {
+        background-color: rgba(0, 0, 0, 0.5); /* Enhancing text readability */
+        border-radius: 10px;
         padding: 20px;
+        bottom: 20%; /* Adjust to better position the caption */
     }
 
-    @media (min-width: 768px) { /* Adjust for medium devices */
-        .hero {
-            min-height: 60vh;
-        }
-    }
-
-    @media (min-width: 992px) { /* Adjust for large devices */
-        .hero {
-            min-height: 75vh;
-        }
-    }
-
-    .animated-text {
-        position: relative;
-        z-index: 2;
-        animation: fadeInUp 1s ease-out forwards;
-        text-align: center;
+    .btn-carousel {
+        background-color: transparent;
+        border: 2px solid white;
         color: white;
-        background-color: rgba(0, 0, 0, 0.5); /* Enhance text readability */
-        padding: 20px;
-        border-radius: 8px;
-    }
-
-    @keyframes fadeInUp {
-        0% {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .hero  {
-        background-color: var(--link-hover-color);
-        border: none;
-        padding: 15px 30px;
+        padding: 10px 20px;
         font-size: 1.2rem; /* Larger button font size */
-        transition: background-color 0.3s ease;
+        transition: all 0.3s ease;
         margin-top: 20px;
     }
 
-    .hero .btn-primary:hover {
+    .btn-carousel:hover {
         background-color: var(--brand-hover-color);
+        color: black; /* Ensuring visibility on hover */
     }
 
-    .btn-primary {background-color: transparent;
-    border-color:white ;}
+    /* Correct carousel control colors for better visibility */
+    .carousel-control-prev-icon,
+    .carousel-control-next-icon {
+        background-color: #000; /* More visible against images */
+    }
+
+    /* Mobile-specific adjustments */
+    @media (max-width: 768px) {
+        .carousel-caption {
+            padding: 10px; /* Smaller padding */
+            font-size: 14px; /* Smaller font size for text */
+        }
+
+        .btn-carousel {
+            padding: 8px 16px; /* Smaller buttons */
+            font-size: 1rem; /* Smaller font size for buttons */
+        }
+
+        .carousel-control-prev-icon,
+        .carousel-control-next-icon {
+            background-color: #666; /* Adjusting for better visibility */
+            border-radius: 50%; /* Circular background */
+        }
+    }
 </style>
 
-<div class="hero">
-    <div class="animated-text">
-        <h1>Welcome to Barber's Nook</h1>
-        <p class="lead">Your new destination for premium barber services. Book an appointment today and transform your style!</p>
-        <a href="{% url 'booking' %}" class="btn btn-primary btn-lg">Book Now</a>
+<div id="carouselExampleIndicators" class="carousel slide" data-bs-ride="carousel" data-bs-touch="true">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-label="Slide 1"></button>
+        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="3" aria-label="Slide 4"></button>
     </div>
+    <div class="carousel-inner">
+        <div class="carousel-item active" style="background-image: url('{% static 'images/gallery.jpg' %}');">
+            <div class="carousel-caption d-none d-md-block">
+                <h5>Gallery</h5>
+                <p>Explore our latest styles and cuts.</p>
+                <a href="{% url 'gallery' %}" class="btn btn-carousel">Visit Gallery</a>
+            </div>
+        </div>
+        <div class="carousel-item" style="background-image: url('{% static 'images/booking.jpg' %}');">
+            <div class="carousel-caption d-none d-md-block">
+                <h5>Bookings</h5>
+                <p>Book your next appointment with us today.</p>
+                <a href="{% url 'booking' %}" class="btn btn-carousel">Make a Booking</a>
+            </div>
+        </div>
+        <div class="carousel-item" style="background-image: url('{% static 'images/about.jpg' %}');">
+            <div class="carousel-caption d-none d-md-block">
+                <h5>About Us</h5>
+                <p>Learn more about our business and values.</p>
+                <a href="{% url 'about' %}" class="btn btn-carousel">About Us</a>
+            </div>
+        </div>
+        <div class="carousel-item" style="background-image: url('{% static 'images/blog.jpg' %}');">
+            <div class="carousel-caption d-none d-md-block">
+                <h5>Blog</h5>
+                <p>Read our latest articles and updates.</p>
+                <a href="{% url 'blog' %}" class="btn btn-carousel">Visit Blog</a>
+            </div>
+        </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
 </div>
 {% endblock %}
