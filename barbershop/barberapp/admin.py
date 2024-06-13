@@ -1,13 +1,13 @@
 from django.contrib import admin
 from .models import Service, Staff, BusinessHours, Booking, GalleryImage
 
+class BusinessHoursInline(admin.TabularInline):
+    model = BusinessHours
+    extra = 1
+
 class StaffAdmin(admin.ModelAdmin):
     list_display = ('name', 'email')
-
-class BusinessHoursAdmin(admin.ModelAdmin):
-    list_display = ('staff', 'day_of_week', 'open_time', 'close_time')
-    list_filter = ('day_of_week', 'staff')
-    ordering = ('day_of_week',)
+    inlines = [BusinessHoursInline]
 
 class BookingAdmin(admin.ModelAdmin):
     list_display = ('client_name', 'service', 'staff', 'date_time', 'client_contact')
@@ -16,6 +16,6 @@ class BookingAdmin(admin.ModelAdmin):
 
 admin.site.register(Service)
 admin.site.register(Staff, StaffAdmin)
-admin.site.register(BusinessHours, BusinessHoursAdmin)
+admin.site.register(BusinessHours)
 admin.site.register(Booking, BookingAdmin)
 admin.site.register(GalleryImage)

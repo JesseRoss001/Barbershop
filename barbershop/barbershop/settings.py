@@ -60,7 +60,7 @@ ROOT_URLCONF = 'barbershop.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # This should point to the global templates directory
+        'DIRS': [BASE_DIR / 'barberapp' / 'templates'],  # Adjust this path if necessary
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
