@@ -5,7 +5,13 @@
     .carousel-item {
         min-height: 75vh; /* Adjusted for better coverage */
         background-size: cover;
-        background-position: center;
+        background-position: center; /* Center by default */
+    }
+
+    @media (min-width: 768px) { /* Medium screens and up */
+        .carousel-item {
+            background-position: top center; /* Top center on medium and larger screens */
+        }
     }
 
     .carousel-caption {
@@ -13,6 +19,10 @@
         border-radius: 10px;
         padding: 20px;
         bottom: 20%; /* Adjust to better position the caption */
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        max-width: 90%;
     }
 
     .btn-carousel {
@@ -20,20 +30,41 @@
         border: 2px solid white;
         color: white;
         padding: 10px 20px;
-        font-size: 1.2rem; /* Larger button font size */
+        font-size: 1rem; /* Default font size */
         transition: all 0.3s ease;
         margin-top: 20px;
+        cursor: pointer;
     }
 
     .btn-carousel:hover {
         background-color: var(--brand-hover-color);
-        color: black; /* Ensuring visibility on hover */
+        color: black;
     }
 
-    /* Correct carousel control colors for better visibility */
+    /* Text size adjustments */
+    @media (min-width: 768px) { /* Medium screens */
+        .carousel-caption h5 {
+            font-size: 1.75rem;
+        }
+        .carousel-caption p {
+            font-size: 1.25rem;
+        }
+    }
+
+    @media (min-width: 992px) { /* Large screens */
+        .carousel-caption h5 {
+            font-size: 2rem;
+        }
+        .carousel-caption p {
+            font-size: 1.5rem;
+        }
+    }
+
+    /* Carousel control adjustments for better visibility */
     .carousel-control-prev-icon,
     .carousel-control-next-icon {
         background-color: #000; /* More visible against images */
+        border-radius: 50%; /* Circular background */
     }
 
     /* Mobile-specific adjustments */
@@ -45,13 +76,12 @@
 
         .btn-carousel {
             padding: 8px 16px; /* Smaller buttons */
-            font-size: 1rem; /* Smaller font size for buttons */
+            font-size: 0.875rem; /* Smaller font size for buttons */
         }
 
         .carousel-control-prev-icon,
         .carousel-control-next-icon {
             background-color: #666; /* Adjusting for better visibility */
-            border-radius: 50%; /* Circular background */
         }
     }
 </style>
@@ -65,28 +95,28 @@
     </div>
     <div class="carousel-inner">
         <div class="carousel-item active" style="background-image: url('{% static 'images/gallery.jpg' %}');">
-            <div class="carousel-caption d-none d-md-block">
+            <div class="carousel-caption d-block">
                 <h5>Gallery</h5>
                 <p>Explore our latest styles and cuts.</p>
                 <a href="{% url 'gallery' %}" class="btn btn-carousel">Visit Gallery</a>
             </div>
         </div>
         <div class="carousel-item" style="background-image: url('{% static 'images/booking.jpg' %}');">
-            <div class="carousel-caption d-none d-md-block">
+            <div class="carousel-caption d-block">
                 <h5>Bookings</h5>
                 <p>Book your next appointment with us today.</p>
                 <a href="{% url 'booking' %}" class="btn btn-carousel">Make a Booking</a>
             </div>
         </div>
         <div class="carousel-item" style="background-image: url('{% static 'images/about.jpg' %}');">
-            <div class="carousel-caption d-none d-md-block">
+            <div class="carousel-caption d-block">
                 <h5>About Us</h5>
                 <p>Learn more about our business and values.</p>
                 <a href="{% url 'about' %}" class="btn btn-carousel">About Us</a>
             </div>
         </div>
         <div class="carousel-item" style="background-image: url('{% static 'images/blog.jpg' %}');">
-            <div class="carousel-caption d-none d-md-block">
+            <div class="carousel-caption d-block">
                 <h5>Blog</h5>
                 <p>Read our latest articles and updates.</p>
                 <a href="{% url 'blog' %}" class="btn btn-carousel">Visit Blog</a>
@@ -97,7 +127,7 @@
         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Previous</span>
     </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+    <button class="carousel-control-next" type of button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
         <span class="carousel-control-next-icon" aria-hidden="true"></span>
         <span class="visually-hidden">Next</span>
     </button>
