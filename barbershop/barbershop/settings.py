@@ -34,13 +34,14 @@ CSRF_TRUSTED_ORIGINS = ['https://*.gitpod.io']
 # Application definition
 
 INSTALLED_APPS = [
+    'barberapp',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'barberapp'
+
 
 ]
 
@@ -60,7 +61,7 @@ ROOT_URLCONF = 'barbershop.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'barberapp' / 'templates'],  # Adjust this path if necessary
+        'DIRS': [BASE_DIR / 'barberapp' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

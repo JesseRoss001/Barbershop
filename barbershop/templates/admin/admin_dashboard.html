@@ -1,0 +1,57 @@
+{% extends 'base_site.html' %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+    .time-slot { margin-bottom: 10px; }
+    button { margin-top: 20px; }
+</style>
+
+<h1>Staff Scheduling Dashboard</h1>
+<div id="schedule-container">
+    {% for staff in staffs %}
+    <div class="staff-schedule" data-staff-id="{{ staff.id }}">
+        <h2>{{ staff.name }}</h2>
+        <div class="week-selector">
+            {% for i in "1234567"|make_list %}
+            <button class="btn btn-secondary week-day" data-day="{{ i }}">Day {{ i }}</button>
+            {% endfor %}
+        </div>
+        <div class="time-slots">
+            <!-- Time slots will be dynamically inserted here -->
+        </div>
+        <button class="btn btn-primary add-time-slot">Add Time Slot</button>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+$(document).ready(function() {
+    $('.add-time-slot').click(function() {
+        var container = $(this).prev('.time-slots');
+        var newSlot = $('<div class="time-slot">' +
+            '<input type="time" name="start_time" />' +
+            ' - ' +
+            '<input type="time" name="end_time" />' +
+            '<button class="remove-slot">Remove</button>' +
+            '</div>');
+        container.append(newSlot);
+    });
+
+    $(document).on('click', '.remove-slot', function() {
+        $(this).parent().remove();
+    });
+
+    $('.week-day').click(function() {
+        $(this).siblings().removeClass('active');
+        $(this).addClass('active');
+        // Load or refresh time slots for selected day
+        var staffId = $(this).closest('.staff-schedule').data('staff-id');
+        var dayIndex = $(this).data('day');
+        // AJAX call to fetch time slots for this staff member and day
+        console.log('Load time slots for staff', staffId, 'on day', dayIndex);
+    });
+});
+</script>
+{% endblock %}
