@@ -34,6 +34,7 @@ CSRF_TRUSTED_ORIGINS = ['https://*.gitpod.io']
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'barberapp',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -44,6 +45,14 @@ INSTALLED_APPS = [
 
 
 ]
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Admin Panel",
+    "site_header": "My Administration",
+    "welcome_sign": "Welcome to the admin panel",
+    "search_model": "auth.User",
+    "user_avatar": None,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

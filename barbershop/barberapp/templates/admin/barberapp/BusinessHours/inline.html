@@ -1,0 +1,25 @@
+{% extends "admin/edit_inline/tabular.html" %}
+
+{% block extrahead %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        // Example JavaScript code here
+        console.log('Custom JS for BusinessHours is loaded!');
+    });
+</script>
+
+{% endblock %}
+
+{% block field_sets %}
+{{ block.super }}
+<!-- Custom HTML here for break times -->
+<tr>
+    <th>Lunch Break Start</th>
+    <td>{{ form.break_start }}</td>
+</tr>
+<tr>
+    <th>Lunch Break End</th>
+    <td>{{ form.break_end }}</td>
+</tr>
+{% endblock %}
