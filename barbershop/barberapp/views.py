@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, HttpResponse
-from .models import Booking, Service, Staff, BusinessHours, GalleryImage
+from .models import Booking, Service, Staff, WorkingHours, GalleryImage
 from django.utils import timezone
 import datetime
 
@@ -50,3 +50,29 @@ def blog(request):
 def gallery(request):
     images = GalleryImage.objects.all()
     return render(request, 'barberapp/gallery.html', {'images': images})
+
+def staff_availability(request):
+    today = datetime.date.today()
+    next_60_days = [today + datetime.timedelta(days=i) for i in range(60)]
+    
+    if request.method == 'POST':
+        for day in next_60_days:
+            working = request.POST.get(f'{day}_working', False)
+            arriving_time = request.POST.get(f'{day}_arriving_time', None)
+            leaving_time = request.POST.get(f'{day}_leaving_time', None)
+                
+            WorkingHours.objects.update_or_create(
+                staff=request.user.staff,
+                day_of_week=day.weekday(),
+                defaults={
+                    'working': working,
+                    'arriving_time': arriving_time,
+                    'leaving_time': leaving_time,
+                }
+            )
+        return redirect('staff_availability')
+    
+    context = {
+        'days': next_60_days,
+    }
+    return render(request, 'barberapp/staff_availability.html', context)

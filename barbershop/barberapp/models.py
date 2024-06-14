@@ -4,19 +4,20 @@ class Service(models.Model):
     name = models.CharField(max_length=100)
     duration = models.DurationField(help_text="Duration of the service")
 
-class BusinessHours(models.Model):
-    DAY_CHOICES = [(i, day) for i, day in enumerate(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])]
+class WorkingHours(models.Model):
+    DAY_CHOICES = [
+        (0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'),
+        (3, 'Thursday'), (4, 'Friday'), (5, 'Saturday'), (6, 'Sunday')
+    ]
     
     day_of_week = models.IntegerField(choices=DAY_CHOICES, help_text="Day of the week")
-    is_open = models.BooleanField(default=True, help_text="Is the business open on this day?")
-    open_time = models.TimeField(blank=True, null=True, help_text="Opening time")
-    close_time = models.TimeField(blank=True, null=True, help_text="Closing time")
-    lunch_start = models.TimeField(blank=True, null=True, help_text="Start of lunch break")
-    lunch_end = models.TimeField(blank=True, null=True, help_text="End of lunch break")
-    staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='business_hours')
+    working = models.BooleanField(default=True, help_text="Is the staff member working on this day?")
+    arriving_time = models.TimeField(blank=True, null=True, help_text="Arriving time")
+    leaving_time = models.TimeField(blank=True, null=True, help_text="Leaving time")
+    staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='working_hours')
 
     def __str__(self):
-        status = "Open" if self.is_open else "Closed"
+        status = "Working" if self.working else "Not Working"
         return f"{self.get_day_of_week_display()} - {status}"
 
 class Staff(models.Model):

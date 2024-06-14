@@ -1,0 +1,31 @@
+<!-- templates/barberapp/staff_availability.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Availability</title>
+</head>
+<body>
+    <h1>Set Your Availability</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <th>Date</th>
+                <th>Working</th>
+                <th>Arriving Time</th>
+                <th>Leaving Time</th>
+            </tr>
+            {% for day in days %}
+                <tr>
+                    <td>{{ day }}</td>
+                    <td><input type="checkbox" name="{{ day }}_working"></td>
+                    <td><input type="time" name="{{ day }}_arriving_time"></td>
+                    <td><input type="time" name="{{ day }}_leaving_time"></td>
+                </tr>
+            {% endfor %}
+        </table>
+        <button type="submit">Save</button>
+    </form>
+</body>
+</html>
