@@ -1,8 +1,13 @@
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth import login, authenticate
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordResetForm
+from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
+from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+
 from .models import Booking, Service, Staff, WorkingHours, GalleryImage
+from django.contrib.auth import views as auth_views
 from django.utils import timezone
 import datetime
 
@@ -22,12 +27,47 @@ def register(request):
                 form.add_error('password2', 'Invalid registration key')
     else:
         form = UserCreationForm()
-    return render(request, 'barberapp/registration/register.html', {'form': form})
+    return render(request, 'barberapp/register.html', {'form': form})
 
 def staff_login(request):
     if request.user.is_authenticated:
         return redirect('home')
-    return render(request, 'barberapp/registration/login.html')
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            return render(request, 'barberapp/login.html', {'error': 'Invalid username or password.'})
+    return render(request, 'barberapp/login.html')
+
+
+def staff_register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        registration_key = request.POST.get('registration_key')
+        if form.is_valid() and registration_key == 'Applejuice001@':
+            user = form.save()
+            Staff.objects.create(user=user, name=user.username, email=user.email)
+            login(request, user)
+            return redirect('home')
+        else:
+            form.add_error('password2', 'Invalid registration key or form is invalid')
+    else:
+        form = UserCreationForm()
+    return render(request, 'barberapp/register.html', {'form': form})
+
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'barberapp/password_reset.html'
+    email_template_name = 'barberapp/password_reset_email.html'
+    subject_template_name = 'barberapp/password_reset_subject.txt'
+    success_url = reverse_lazy('password_reset_done')
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'barberapp/password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
 
 @login_required
 def staff_availability(request):

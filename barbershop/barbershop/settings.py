@@ -46,6 +46,10 @@ INSTALLED_APPS = [
 
 ]
 
+
+LOGOUT_REDIRECT_URL = 'home'
+
+
 JAZZMIN_SETTINGS = {
     "site_title": "Admin Panel",
     "site_header": "My Administration",
