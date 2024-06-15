@@ -1,10 +1,64 @@
 from django.shortcuts import render, redirect, HttpResponse
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.decorators import login_required
 from .models import Booking, Service, Staff, WorkingHours, GalleryImage
 from django.utils import timezone
 import datetime
 
 def home(request):
     return render(request, 'barberapp/home.html')
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            if request.POST.get('registration_key') == 'Applejuice001@':
+                user = form.save()
+                Staff.objects.create(user=user, name=user.username, email=user.email)
+                login(request, user)
+                return redirect('home')
+            else:
+                form.add_error('password2', 'Invalid registration key')
+    else:
+        form = UserCreationForm()
+    return render(request, 'barberapp/registration/register.html', {'form': form})
+
+def staff_login(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    return render(request, 'barberapp/registration/login.html')
+
+@login_required
+def staff_availability(request):
+    today = datetime.date.today()
+    next_60_days = [today + datetime.timedelta(days=i) for i in range(60)]
+    
+    if request.method == 'POST':
+        for day in next_60_days:
+            working = request.POST.get(f'{day}_working', False)
+            arriving_time = request.POST.get(f'{day}_arriving_time', None)
+            leaving_time = request.POST.get(f'{day}_leaving_time', None)
+                
+            WorkingHours.objects.update_or_create(
+                staff=request.user.staff,
+                day_of_week=day.weekday(),
+                defaults={
+                    'working': working,
+                    'arriving_time': arriving_time,
+                    'leaving_time': leaving_time,
+                }
+            )
+        return redirect('staff_availability')
+    
+    context = {
+        'days': next_60_days,
+    }
+    return render(request, 'barberapp/staff_availability.html', context)
+
+
+
+
 
 def book_view(request):
     today = datetime.date.today()
