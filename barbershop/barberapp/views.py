@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth import login, authenticate
+from django.contrib.auth import logout
 from django.contrib.auth.forms import UserCreationForm, PasswordResetForm
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.urls import reverse_lazy
@@ -177,3 +178,8 @@ def staff_availability(request):
         'days': next_60_days,
     }
     return render(request, 'barberapp/staff_availability.html', context)
+
+
+def custom_logout_view(request):
+    logout(request)
+    return redirect('home')
