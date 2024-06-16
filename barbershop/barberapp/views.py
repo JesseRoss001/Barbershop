@@ -5,7 +5,8 @@ from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmVie
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-
+from django.contrib import messages
+from .forms import CustomUserCreationForm  # Import the custom form
 from .models import Booking, Service, Staff, WorkingHours, GalleryImage
 from django.contrib.auth import views as auth_views
 from django.utils import timezone
@@ -13,22 +14,28 @@ import datetime
 
 def home(request):
     return render(request, 'barberapp/home.html')
-
 def register(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             if request.POST.get('registration_key') == 'Applejuice001@':
                 user = form.save()
-                Staff.objects.create(user=user, name=user.username, email=user.email)
+                Staff.objects.create(
+                    user=user, 
+                    name=user.username, 
+                    email=form.cleaned_data.get('email'),
+                    phone_number=form.cleaned_data.get('phone_number')
+                )
                 login(request, user)
+                messages.success(request, 'Registration successful. Welcome!')
                 return redirect('home')
             else:
                 form.add_error('password2', 'Invalid registration key')
+        else:
+            messages.error(request, 'Please correct the error below.')
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     return render(request, 'barberapp/register.html', {'form': form})
-
 def staff_login(request):
     if request.user.is_authenticated:
         return redirect('home')
@@ -46,7 +53,7 @@ def staff_login(request):
 
 def staff_register(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         registration_key = request.POST.get('registration_key')
         if form.is_valid() and registration_key == 'Applejuice001@':
             user = form.save()
@@ -56,7 +63,7 @@ def staff_register(request):
         else:
             form.add_error('password2', 'Invalid registration key or form is invalid')
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     return render(request, 'barberapp/register.html', {'form': form})
 
 class CustomPasswordResetView(PasswordResetView):
