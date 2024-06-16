@@ -76,7 +76,6 @@ class CustomPasswordResetView(PasswordResetView):
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = 'barberapp/password_reset_confirm.html'
     success_url = reverse_lazy('password_reset_complete')
-
 @login_required
 def staff_availability(request):
     today = datetime.date.today()
@@ -84,9 +83,9 @@ def staff_availability(request):
     
     if request.method == 'POST':
         for day in next_60_days:
-            working = request.POST.get(f'{day}_working', False)
-            arriving_time = request.POST.get(f'{day}_arriving_time', None)
-            leaving_time = request.POST.get(f'{day}_leaving_time', None)
+            working = request.POST.get(f'{day}_working') == 'on'
+            arriving_time = request.POST.get(f'{day}_arriving_time')
+            leaving_time = request.POST.get(f'{day}_leaving_time')
                 
             WorkingHours.objects.update_or_create(
                 staff=request.user.staff,
@@ -97,7 +96,7 @@ def staff_availability(request):
                     'leaving_time': leaving_time,
                 }
             )
-        return redirect('staff_availability')
+        return JsonResponse({'status': 'success'})
     
     context = {
         'days': next_60_days,

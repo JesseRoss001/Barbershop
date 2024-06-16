@@ -1,31 +1,193 @@
-<!-- templates/barberapp/staff_availability.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Staff Availability</title>
-</head>
-<body>
-    <h1>Set Your Availability</h1>
-    <form method="POST">
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #121212;
+        color: #ffffff;
+    }
+
+    .main {
+        background-color: #121212;
+        color: #ffffff;
+    }
+
+    .availability-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .availability-header h1 {
+        font-size: 2rem;
+        color: #ffffff;
+    }
+
+    .scroll-buttons {
+        display: flex;
+        gap: 10px;
+        position: sticky;
+        top: 10px;
+    }
+
+    .scroll-buttons button {
+        padding: 10px 20px;
+        font-size: 1rem;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: white;
+    }
+
+    .availability-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+
+    .availability-table th,
+    .availability-table td {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #ddd;
+    }
+
+    .availability-table th {
+        background-color: #343a40;
+        color: white;
+    }
+
+    .availability-table td input[type="checkbox"] {
+        transform: scale(1.2);
+        margin-right: 10px;
+    }
+
+    .availability-table td input[type="time"] {
+        width: 100%;
+        padding: 5px;
+        box-sizing: border-box;
+    }
+
+    @media (max-width: 768px) {
+        .availability-table th,
+        .availability-table td {
+            display: block;
+            width: 100%;
+        }
+
+        .availability-table th {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+        }
+
+        .availability-table td {
+            border: none;
+            position: relative;
+            padding-left: 50%;
+        }
+
+        .availability-table td:before {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .availability-table td:nth-of-type(1):before {
+            content: "Date";
+        }
+
+        .availability-table td:nth-of-type(2):before {
+            content: "Working";
+        }
+
+        .availability-table td:nth-of-type(3):before {
+            content: "Arriving Time";
+        }
+
+        .availability-table td:nth-of-type(4):before {
+            content: "Leaving Time";
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="availability-header">
+        <h1>Set Your Availability</h1>
+        <div class="scroll-buttons">
+            <button onclick="scrollToTop()">Scroll to Top</button>
+            <button onclick="scrollToBottom()">Scroll to Bottom</button>
+        </div>
+    </div>
+    <form id="availabilityForm" method="POST">
         {% csrf_token %}
-        <table>
-            <tr>
-                <th>Date</th>
-                <th>Working</th>
-                <th>Arriving Time</th>
-                <th>Leaving Time</th>
-            </tr>
-            {% for day in days %}
+        <table id="availabilityTable" class="availability-table">
+            <thead>
                 <tr>
-                    <td>{{ day }}</td>
-                    <td><input type="checkbox" name="{{ day }}_working"></td>
-                    <td><input type="time" name="{{ day }}_arriving_time"></td>
-                    <td><input type="time" name="{{ day }}_leaving_time"></td>
+                    <th>Date</th>
+                    <th>Working</th>
+                    <th>Arriving Time</th>
+                    <th>Leaving Time</th>
                 </tr>
-            {% endfor %}
+            </thead>
+            <tbody>
+                {% for day in days %}
+                    <tr>
+                        <td>{{ day|date:"l, F j, Y" }}</td>
+                        <td><input type="checkbox" name="{{ day }}_working" class="form-check-input"></td>
+                        <td><input type="time" name="{{ day }}_arriving_time" class="form-control"></td>
+                        <td><input type="time" name="{{ day }}_leaving_time" class="form-control"></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
         </table>
-        <button type="submit">Save</button>
+        <button type="submit" class="btn btn-primary">Save</button>
     </form>
-</body>
-</html>
+</div>
+<script>
+    function scrollToTop() {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function scrollToBottom() {
+        window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        $('#availabilityTable').DataTable({
+            "paging": false,
+            "searching": false,
+            "info": false,
+            responsive: true
+        });
+    });
+
+    document.getElementById('availabilityForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        // Perform validation and submit via AJAX
+        fetch("{% url 'staff_availability' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams(new FormData(this)).toString()
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Availability saved successfully!');
+        })
+        .catch(error => {
+            alert('An error occurred while saving availability.');
+        });
+    });
+</script>
+{% endblock %}
