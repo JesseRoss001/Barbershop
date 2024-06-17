@@ -1,6 +1,7 @@
 import logging
-from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
-from django.contrib.auth import login, authenticate, logout
+from django.shortcuts import render, redirect, HttpResponse
+from django.contrib.auth import login, authenticate
+from django.contrib.auth import logout
 from django.contrib.auth.forms import UserCreationForm, PasswordResetForm
 from django.contrib.auth.views import PasswordResetView, PasswordResetConfirmView
 from django.urls import reverse_lazy
@@ -8,11 +9,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from django.contrib import messages
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm  # Import the custom form
 from .models import Booking, Service, Staff, Availability, GalleryImage
 from django.utils import timezone
+import datetime
+from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime, timedelta
+
 
 # Setting up logging
 logger = logging.getLogger(__name__)
@@ -27,8 +30,8 @@ def register(request):
             if request.POST.get('registration_key') == 'Applejuice001@':
                 user = form.save()
                 Staff.objects.create(
-                    user=user,
-                    name=user.username,
+                    user=user, 
+                    name=user.username, 
                     email=form.cleaned_data.get('email'),
                     phone_number=form.cleaned_data.get('phone_number')
                 )
@@ -82,41 +85,79 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = 'barberapp/password_reset_confirm.html'
     success_url = reverse_lazy('password_reset_complete')
 
+logger = logging.getLogger(__name__)
 @login_required
-@csrf_exempt
 def staff_availability(request):
     if request.method == 'POST':
         user = request.user
         data = request.POST
 
-        for key, value in data.items():
-            if key.endswith('_working'):
-                date_str = key.replace('_working', '')
-                date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                working = value == 'on'
-                arriving_time = data.get(f'{date_str}_arriving_time')
-                leaving_time = data.get(f'{date_str}_leaving_time')
+        try:
+            logger.debug("Received POST data: %s", data)
 
-                arriving_time = datetime.strptime(arriving_time, '%H:%M').time()
-                leaving_time = datetime.strptime(leaving_time, '%H:%M').time()
+            for key, value in data.items():
+                if key.endswith('_working'):
+                    date_str = key.replace('_working', '')
+                    logger.debug("Processing date: %s", date_str)
+                    date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                    working = value == 'on'
+                    arriving_time_str = data.get(f'{date_str}_arriving_time', '')
+                    leaving_time_str = data.get(f'{date_str}_leaving_time', '')
 
-                # Update or create availability
-                Availability.objects.update_or_create(
-                    user=user,
-                    date=date,
-                    defaults={
-                        'working': working,
-                        'arriving_time': arriving_time,
-                        'leaving_time': leaving_time
-                    }
-                )
+                    if not arriving_time_str:
+                        arriving_time_str = '09:00'
+                    if not leaving_time_str:
+                        leaving_time_str = '17:00'
 
-        return JsonResponse({'status': 'success'})
+                    logger.debug("Raw times - Arriving: %s, Leaving: %s", arriving_time_str, leaving_time_str)
+
+                    arriving_time = datetime.datetime.strptime(arriving_time_str, '%H:%M').time()
+                    leaving_time = datetime.datetime.strptime(leaving_time_str, '%H:%M').time()
+
+                    logger.debug("Parsed times - Arriving: %s, Leaving: %s", arriving_time, leaving_time)
+
+                    if working:
+                        # Update or create availability
+                        Availability.objects.update_or_create(
+                            user=user,
+                            date=date,
+                            defaults={
+                                'working': working,
+                                'arriving_time': arriving_time,
+                                'leaving_time': leaving_time
+                            }
+                        )
+                        logger.debug("Saved availability: %s", {
+                            'user': user,
+                            'date': date,
+                            'working': working,
+                            'arriving_time': arriving_time,
+                            'leaving_time': leaving_time
+                        })
+                    else:
+                        # Update or create availability with working set to False
+                        Availability.objects.update_or_create(
+                            user=user,
+                            date=date,
+                            defaults={
+                                'working': working,
+                                'arriving_time': arriving_time,
+                                'leaving_time': leaving_time
+                            }
+                        )
+                        logger.debug("Saved availability with not working for date: %s", date)
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            logger.error("Error saving availability: %s", e)
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
     # Get existing availability data for the user
-    days = [datetime.now().date() + timedelta(days=i) for i in range(30)]  # Next 30 days
+    days = [timezone.now().date() + datetime.timedelta(days=i) for i in range(30)]  # Next 30 days
     availability = {day: Availability.objects.filter(user=request.user, date=day).first() for day in days}
-    
+
+    logger.debug("Fetched availability data: %s", availability)
+
     return render(request, 'barberapp/availability.html', {'days': days, 'availability': availability})
 
 def book_view(request):

@@ -12,8 +12,8 @@ class Availability(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField()
     working = models.BooleanField(default=False)
-    arriving_time = models.TimeField()
-    leaving_time = models.TimeField()
+    arriving_time = models.TimeField(null=True, blank=True)
+    leaving_time = models.TimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.date}"

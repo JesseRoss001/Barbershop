@@ -1,11 +1,11 @@
 from django.contrib import admin
-from django.utils.html import format_html
 from .models import Service, Staff, Availability, Booking, GalleryImage
 
 class AvailabilityAdmin(admin.ModelAdmin):
     list_display = ('user', 'date', 'working', 'arriving_time', 'leaving_time')
     list_filter = ('user', 'working')
     search_fields = ('user__username', 'date')
+    ordering = ('date',)  # Ensure dates are displayed in order
 
 class StaffAdmin(admin.ModelAdmin):
     list_display = ('name', 'email', 'phone_number')

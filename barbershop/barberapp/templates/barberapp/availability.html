@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load my_filters %}
 
 {% block content %}
 <style>
@@ -120,7 +121,6 @@
         }
     }
 </style>
-
 <div class="container">
     <div class="row">
         <div class="col-12">
@@ -135,7 +135,7 @@
             </div>
         </div>
     </div>
-    <form id="availabilityForm" method="POST">
+    <form id="availabilityForm" method="POST" action="{% url 'staff_availability' %}">
         {% csrf_token %}
         <table id="availabilityTable" class="availability-table">
             <thead>
@@ -148,18 +148,20 @@
             </thead>
             <tbody>
                 {% for day in days %}
-                    <tr data-date="{{ day|date:'Y-m-d' }}">
-                        <td>{{ day|date:'Y-m-d' }}</td>
+                    {% with availability_day=availability|get_item:day %}
+                    <tr data-date="{{ day|date:"Y-m-d" }}">
+                        <td>{{ day|date:"Y-m-d" }}</td>
                         <td>
-                            <input type="checkbox" name="{{ day }}_working" class="form-check-input" data-date="{{ day }}" {% if availability.day and availability.day.working %}checked{% endif %} onchange="logChange(this)">
+                            <input type="checkbox" name="{{ day|date:"Y-m-d" }}_working" class="form-check-input" data-date="{{ day|date:"Y-m-d" }}" {% if availability_day and availability_day.working %}checked{% endif %} onchange="logChange(this)">
                         </td>
                         <td>
-                            <input type="time" name="{{ day }}_arriving_time" class="form-control" value="{{ availability.day.arriving_time|default:'09:00' }}" data-date="{{ day }}" onchange="logChange(this)">
+                            <input type="time" name="{{ day|date:"Y-m-d" }}_arriving_time" class="form-control" value="{% if availability_day %}{{ availability_day.arriving_time|default:'09:00' }}{% else %}09:00{% endif %}" data-date="{{ day|date:"Y-m-d" }}" onchange="logChange(this)">
                         </td>
                         <td>
-                            <input type="time" name="{{ day }}_leaving_time" class="form-control" value="{{ availability.day.leaving_time|default:'17:00' }}" data-date="{{ day }}" onchange="logChange(this)">
+                            <input type="time" name="{{ day|date:"Y-m-d" }}_leaving_time" class="form-control" value="{% if availability_day %}{{ availability_day.leaving_time|default:'17:00' }}{% else %}17:00{% endif %}" data-date="{{ day|date:"Y-m-d" }}" onchange="logChange(this)">
                         </td>
                     </tr>
+                    {% endwith %}
                 {% endfor %}
             </tbody>
         </table>
@@ -190,35 +192,14 @@
         event.preventDefault();
         console.log("Form submit intercepted");
 
-        const formData = new FormData();
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        formData.append("csrfmiddlewaretoken", csrfToken);
+        const formData = new FormData(event.target);
+        const csrfToken = formData.get('csrfmiddlewaretoken');
         console.log(`Appending csrfmiddlewaretoken: ${csrfToken}`);
-
-        const days = document.querySelectorAll('tr[data-date]');
-        days.forEach(dayRow => {
-            const date = dayRow.getAttribute('data-date');
-            const working = document.querySelector(`input[name="${date}_working"]`);
-            const arrivingTime = document.querySelector(`input[name="${date}_arriving_time"]`);
-            const leavingTime = document.querySelector(`input[name="${date}_leaving_time"]`);
-
-            if (working && arrivingTime && leavingTime) {
-                formData.append(`${date}_working`, working.checked ? "on" : "off");
-                formData.append(`${date}_arriving_time`, arrivingTime.value);
-                formData.append(`${date}_leaving_time`, leavingTime.value);
-
-                console.log(`Appending ${date}_working: ${working.checked ? "on" : "off"}`);
-                console.log(`Appending ${date}_arriving_time: ${arrivingTime.value}`);
-                console.log(`Appending ${date}_leaving_time: ${leavingTime.value}`);
-            } else {
-                console.error(`Missing elements for date ${date}`);
-            }
-        });
 
         const formDataEntries = [...formData.entries()];
         console.log('Form data prepared for submission:', formDataEntries);
 
-        fetch("{% url 'staff_availability' %}", {
+        fetch(event.target.action, {
             method: "POST",
             headers: {
                 "X-CSRFToken": csrfToken
@@ -241,6 +222,7 @@
             console.log("Data received", data);
             if (data.status === 'success') {
                 alert('Availability saved successfully!');
+                window.location.reload(); // Reload the page to reflect saved changes
             } else {
                 alert('Failed to save availability: ' + data.message);
             }
