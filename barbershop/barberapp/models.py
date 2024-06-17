@@ -1,24 +1,22 @@
 from django.db import models
 from django.contrib.auth.models import User
+
 class Service(models.Model):
     name = models.CharField(max_length=100)
     duration = models.DurationField(help_text="Duration of the service")
-class WorkingHours(models.Model):
-    DAY_CHOICES = [
-        (0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'),
-        (3, 'Thursday'), (4, 'Friday'), (5, 'Saturday'), (6, 'Sunday')
-    ]
-    
-    day_of_week = models.IntegerField(choices=DAY_CHOICES, help_text="Day of the week")
-    working = models.BooleanField(default=True, help_text="Is the staff member working on this day?")
-    arriving_time = models.TimeField(blank=True, null=True, help_text="Arriving time")
-    leaving_time = models.TimeField(blank=True, null=True, help_text="Leaving time")
-    staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='working_hours')
 
     def __str__(self):
-        status = "Working" if self.working else "Not Working"
-        return f"{self.get_day_of_week_display()} - {status}"
+        return self.name
 
+class Availability(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField()
+    working = models.BooleanField(default=False)
+    arriving_time = models.TimeField()
+    leaving_time = models.TimeField()
+
+    def __str__(self):
+        return f"{self.user.username} - {self.date}"
 
 class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -36,6 +34,12 @@ class Booking(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
     date_time = models.DateTimeField()
 
+    def __str__(self):
+        return f"Booking for {self.client_name} with {self.staff.name} on {self.date_time}"
+
 class GalleryImage(models.Model):
     image = models.ImageField(upload_to='gallery/')
     caption = models.CharField(max_length=255, blank=True)
+
+    def __str__(self):
+        return self.caption or "Gallery Image"
