@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 class Service(models.Model):
     name = models.CharField(max_length=100)
     duration = models.DurationField(help_text="Duration of the service")
-
 class WorkingHours(models.Model):
     DAY_CHOICES = [
         (0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'),
@@ -19,6 +18,7 @@ class WorkingHours(models.Model):
     def __str__(self):
         status = "Working" if self.working else "Not Working"
         return f"{self.get_day_of_week_display()} - {status}"
+
 
 class Staff(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

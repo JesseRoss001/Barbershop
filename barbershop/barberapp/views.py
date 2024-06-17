@@ -11,7 +11,12 @@ from .forms import CustomUserCreationForm  # Import the custom form
 from .models import Booking, Service, Staff, WorkingHours, GalleryImage
 from django.contrib.auth import views as auth_views
 from django.utils import timezone
+import logging
 import datetime
+
+
+# Setting up logging
+logger = logging.getLogger(__name__)
 
 def home(request):
     return render(request, 'barberapp/home.html')
@@ -76,32 +81,43 @@ class CustomPasswordResetView(PasswordResetView):
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     template_name = 'barberapp/password_reset_confirm.html'
     success_url = reverse_lazy('password_reset_complete')
+
+
+logger = logging.getLogger(__name__)
+
 @login_required
 def staff_availability(request):
-    today = datetime.date.today()
-    next_60_days = [today + datetime.timedelta(days=i) for i in range(60)]
-    
     if request.method == 'POST':
-        for day in next_60_days:
-            working = request.POST.get(f'{day}_working') == 'on'
-            arriving_time = request.POST.get(f'{day}_arriving_time')
-            leaving_time = request.POST.get(f'{day}_leaving_time')
-                
+        try:
+            date_str = request.POST.get('date')
+            working = request.POST.get('working') == 'true'
+            arriving_time = request.POST.get('arriving_time')
+            leaving_time = request.POST.get('leaving_time')
+
+            date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+            day_of_week = date.weekday()
+
             WorkingHours.objects.update_or_create(
                 staff=request.user.staff,
-                day_of_week=day.weekday(),
+                day_of_week=day_of_week,
                 defaults={
                     'working': working,
                     'arriving_time': arriving_time,
                     'leaving_time': leaving_time,
                 }
             )
-        return JsonResponse({'status': 'success'})
-    
-    context = {
-        'days': next_60_days,
-    }
-    return render(request, 'barberapp/staff_availability.html', context)
+            logger.info("Availability updated for user %s on date %s", request.user.username, date_str)
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            logger.error("Failed to update availability for user %s on date %s: %s", request.user.username, request.POST.get('date'), str(e))
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    else:
+        today = datetime.date.today()
+        days = [today + datetime.timedelta(days=i) for i in range(60)]
+        context = {
+            'days': days,
+        }
+        return render(request, 'barberapp/staff_availability.html', context)
 
 
 

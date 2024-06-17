@@ -11,16 +11,13 @@
         color: #ffffff;
     }
 
-    .main {
-        background-color: #121212;
-        color: #ffffff;
-    }
-
     .availability-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+        background-color: #121212;
+        z-index: 1000;
     }
 
     .availability-header h1 {
@@ -32,7 +29,11 @@
         display: flex;
         gap: 10px;
         position: sticky;
-        top: 10px;
+        bottom: 0;
+        z-index: 1050;
+        background-color: #121212;
+        padding: 10px;
+        width: 100%;
     }
 
     .scroll-buttons button {
@@ -41,7 +42,7 @@
         cursor: pointer;
         border: none;
         border-radius: 5px;
-        background-color: #007bff;
+        background-color: #612815;
         color: white;
     }
 
@@ -121,11 +122,17 @@
 </style>
 
 <div class="container">
-    <div class="availability-header">
-        <h1>Set Your Availability</h1>
-        <div class="scroll-buttons">
-            <button onclick="scrollToTop()">Scroll to Top</button>
-            <button onclick="scrollToBottom()">Scroll to Bottom</button>
+    <div class="row">
+        <div class="col-12">
+            <div class="availability-header">
+                <h1>Set Your Availability</h1>
+            </div>
+            <div class="col-12">
+                <div class="scroll-buttons">
+                    <button type="button" onclick="scrollToTop()">Scroll to Top</button>
+                    <button type="button" onclick="scrollToBottom()">Scroll to Bottom</button>
+                </div>
+            </div>
         </div>
     </div>
     <form id="availabilityForm" method="POST">
@@ -143,51 +150,73 @@
                 {% for day in days %}
                     <tr>
                         <td>{{ day|date:"l, F j, Y" }}</td>
-                        <td><input type="checkbox" name="{{ day }}_working" class="form-check-input"></td>
-                        <td><input type="time" name="{{ day }}_arriving_time" class="form-control"></td>
-                        <td><input type="time" name="{{ day }}_leaving_time" class="form-control"></td>
+                        <td>
+                            <input type="checkbox" name="{{ day }}_working" class="form-check-input" data-date="{{ day }}" onchange="updateAvailability(this)">
+                        </td>
+                        <td>
+                            <input type="time" name="{{ day }}_arriving_time" class="form-control" value="09:00" data-date="{{ day }}" onchange="updateAvailability(this)">
+                        </td>
+                        <td>
+                            <input type="time" name="{{ day }}_leaving_time" class="form-control" value="17:00" data-date="{{ day }}" onchange="updateAvailability(this)">
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-        <button type="submit" class="btn btn-primary">Save</button>
     </form>
 </div>
 <script>
     function scrollToTop() {
+        console.log("Scrolling to top");
         window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
     function scrollToBottom() {
+        console.log("Scrolling to bottom");
         window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        $('#availabilityTable').DataTable({
-            "paging": false,
-            "searching": false,
-            "info": false,
-            responsive: true
-        });
-    });
+    function updateAvailability(element) {
+        const date = element.getAttribute('data-date');
+        const working = document.querySelector(`input[name="${date}_working"]`).checked;
+        const arriving_time = document.querySelector(`input[name="${date}_arriving_time"]`).value;
+        const leaving_time = document.querySelector(`input[name="${date}_leaving_time"]`).value;
 
-    document.getElementById('availabilityForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        // Perform validation and submit via AJAX
+        const data = {
+            csrfmiddlewaretoken: document.querySelector('[name=csrfmiddlewaretoken]').value,
+            date: date,
+            working: working,
+            arriving_time: arriving_time,
+            leaving_time: leaving_time
+        };
+
+        console.log("Updating availability for date:", date, "with data:", data);
+
         fetch("{% url 'staff_availability' %}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
             },
-            body: new URLSearchParams(new FormData(this)).toString()
+            body: new URLSearchParams(data).toString()
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log("Response received", response);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
-            alert('Availability saved successfully!');
+            console.log("Data received", data);
+            if (data.status === 'success') {
+                console.log('Availability updated successfully for date:', date);
+            } else {
+                console.error('Failed to update availability for date:', date, 'with message:', data.message);
+            }
         })
         .catch(error => {
-            alert('An error occurred while saving availability.');
+            console.error("Error occurred while updating availability for date:", date, error);
         });
-    });
+    }
 </script>
 {% endblock %}
