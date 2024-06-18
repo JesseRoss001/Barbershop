@@ -104,20 +104,17 @@ def staff_availability(request):
                     arriving_time_str = data.get(f'{date_str}_arriving_time', '')
                     leaving_time_str = data.get(f'{date_str}_leaving_time', '')
 
-                    if not arriving_time_str:
-                        arriving_time_str = '09:00'
-                    if not leaving_time_str:
-                        leaving_time_str = '17:00'
-
-                    logger.debug("Raw times - Arriving: %s, Leaving: %s", arriving_time_str, leaving_time_str)
-
-                    arriving_time = datetime.datetime.strptime(arriving_time_str, '%H:%M').time()
-                    leaving_time = datetime.datetime.strptime(leaving_time_str, '%H:%M').time()
-
-                    logger.debug("Parsed times - Arriving: %s, Leaving: %s", arriving_time, leaving_time)
+                    arriving_time = None
+                    leaving_time = None
 
                     if working:
-                        # Update or create availability
+                        if arriving_time_str:
+                            arriving_time = datetime.datetime.strptime(arriving_time_str, '%H:%M').time()
+                        if leaving_time_str:
+                            leaving_time = datetime.datetime.strptime(leaving_time_str, '%H:%M').time()
+                        if arriving_time is None or leaving_time is None:
+                            return JsonResponse({'status': 'error', 'message': 'Arriving and leaving times must be set if working is checked.'}, status=400)
+
                         Availability.objects.update_or_create(
                             user=user,
                             date=date,
@@ -127,38 +124,27 @@ def staff_availability(request):
                                 'leaving_time': leaving_time
                             }
                         )
-                        logger.debug("Saved availability: %s", {
-                            'user': user,
-                            'date': date,
-                            'working': working,
-                            'arriving_time': arriving_time,
-                            'leaving_time': leaving_time
-                        })
                     else:
-                        # Update or create availability with working set to False
                         Availability.objects.update_or_create(
                             user=user,
                             date=date,
                             defaults={
-                                'working': working,
-                                'arriving_time': arriving_time,
-                                'leaving_time': leaving_time
+                                'working': False,
+                                'arriving_time': None,
+                                'leaving_time': None
                             }
                         )
-                        logger.debug("Saved availability with not working for date: %s", date)
 
             return JsonResponse({'status': 'success'})
         except Exception as e:
             logger.error("Error saving availability: %s", e)
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-    # Get existing availability data for the user
-    days = [timezone.now().date() + datetime.timedelta(days=i) for i in range(30)]  # Next 30 days
+    days = [timezone.now().date() + datetime.timedelta(days=i) for i in range(30)]
     availability = {day: Availability.objects.filter(user=request.user, date=day).first() for day in days}
 
-    logger.debug("Fetched availability data: %s", availability)
-
     return render(request, 'barberapp/availability.html', {'days': days, 'availability': availability})
+
 
 def book_view(request):
     today = datetime.date.today()

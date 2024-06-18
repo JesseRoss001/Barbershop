@@ -121,6 +121,7 @@
         }
     }
 </style>
+
 <div class="container">
     <div class="row">
         <div class="col-12">
@@ -155,10 +156,10 @@
                             <input type="checkbox" name="{{ day|date:"Y-m-d" }}_working" class="form-check-input" data-date="{{ day|date:"Y-m-d" }}" {% if availability_day and availability_day.working %}checked{% endif %} onchange="logChange(this)">
                         </td>
                         <td>
-                            <input type="time" name="{{ day|date:"Y-m-d" }}_arriving_time" class="form-control" value="{% if availability_day %}{{ availability_day.arriving_time|default:'09:00' }}{% else %}09:00{% endif %}" data-date="{{ day|date:"Y-m-d" }}" onchange="logChange(this)">
+                            <input type="time" name="{{ day|date:"Y-m-d" }}_arriving_time" class="form-control" value="{% if availability_day and availability_day.arriving_time %}{{ availability_day.arriving_time|default:"" }}{% else %}09:00{% endif %}" data-date="{{ day|date:"Y-m-d" }}" onchange="logChange(this)">
                         </td>
                         <td>
-                            <input type="time" name="{{ day|date:"Y-m-d" }}_leaving_time" class="form-control" value="{% if availability_day %}{{ availability_day.leaving_time|default:'17:00' }}{% else %}17:00{% endif %}" data-date="{{ day|date:"Y-m-d" }}" onchange="logChange(this)">
+                            <input type="time" name="{{ day|date:"Y-m-d" }}_leaving_time" class="form-control" value="{% if availability_day and availability_day.leaving_time %}{{ availability_day.leaving_time|default:"" }}{% else %}17:00{% endif %}" data-date="{{ day|date:"Y-m-d" }}" onchange="logChange(this)">
                         </td>
                     </tr>
                     {% endwith %}
@@ -199,6 +200,13 @@
         const formDataEntries = [...formData.entries()];
         console.log('Form data prepared for submission:', formDataEntries);
 
+        // Ensure unchecked checkboxes are included correctly
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            if (!checkbox.checked) {
+                formData.append(checkbox.name, 'off');
+            }
+        });
+
         fetch(event.target.action, {
             method: "POST",
             headers: {
@@ -222,7 +230,7 @@
             console.log("Data received", data);
             if (data.status === 'success') {
                 alert('Availability saved successfully!');
-                window.location.reload(); // Reload the page to reflect saved changes
+                window.location.reload();
             } else {
                 alert('Failed to save availability: ' + data.message);
             }
