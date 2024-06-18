@@ -1,12 +1,10 @@
-# /workspace/Barbershop/barbershop/barberapp/utils.py
-
-from sendgrid import SendGridAPIClient
+import sendgrid
 from sendgrid.helpers.mail import Mail
 from twilio.rest import Client
 from django.conf import settings
 
 def send_email(to_email, subject, content):
-    sg = SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
+    sg = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
     email = Mail(
         from_email=settings.FROM_EMAIL,
         to_emails=to_email,

@@ -194,7 +194,6 @@ def submit_booking(request):
             return redirect('book_view')
 
         try:
-            # Validate email and phone number
             email_regex = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
             phone_regex = re.compile(r'^(?:\+44|0044|0)?[\s\-]?\(?\d{2,4}\)?[\s\-]?\d{3,4}[\s\-]?\d{3,4}$')
 
@@ -216,7 +215,6 @@ def submit_booking(request):
             start_time = datetime.combine(date, time)
             end_time = start_time + service.duration
 
-            # Check for overlapping bookings
             overlapping_booking = Booking.objects.filter(
                 date=date,
                 staff=staff.user,
@@ -230,7 +228,7 @@ def submit_booking(request):
                              service.name, date, time, staff.name)
                 return redirect('book_view')
 
-            Booking.objects.create(
+            booking = Booking.objects.create(
                 service=service,
                 date=date,
                 time=time,
@@ -241,11 +239,9 @@ def submit_booking(request):
                 staff=staff.user
             )
 
-            # Send Email
             email_content = f"Dear {client_name},\nYour booking for {service.name} on {date_str} at {time_str} is confirmed."
             send_email(client_email, "Booking Confirmation", email_content)
 
-            # Send SMS
             sms_content = f"Dear {client_name}, your booking for {service.name} on {date_str} at {time_str} is confirmed."
             send_sms(client_phone, sms_content)
 
@@ -267,6 +263,7 @@ def submit_booking(request):
 
     services = Service.objects.all()
     return render(request, 'barberapp/book_appointment.html', {'services': services})
+
 def get_available_times(request):
     service_id = request.GET.get('service_id')
     date_str = request.GET.get('date')
@@ -326,3 +323,8 @@ def gallery(request):
 def custom_logout_view(request):
     logout(request)
     return redirect('home')
+
+
+
+def booking_success(request):
+    return render(request, 'barberapp/booking_success.html')
