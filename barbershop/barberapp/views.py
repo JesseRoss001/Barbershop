@@ -115,35 +115,27 @@ def staff_availability(request):
                         if arriving_time is None or leaving_time is None:
                             return JsonResponse({'status': 'error', 'message': 'Arriving and leaving times must be set if working is checked.'}, status=400)
 
-                        Availability.objects.update_or_create(
-                            user=user,
-                            date=date,
-                            defaults={
-                                'working': working,
-                                'arriving_time': arriving_time,
-                                'leaving_time': leaving_time
-                            }
-                        )
-                    else:
-                        Availability.objects.update_or_create(
-                            user=user,
-                            date=date,
-                            defaults={
-                                'working': False,
-                                'arriving_time': None,
-                                'leaving_time': None
-                            }
-                        )
+                    Availability.objects.update_or_create(
+                        user=user,
+                        date=date,
+                        defaults={
+                            'working': working,
+                            'arriving_time': arriving_time,
+                            'leaving_time': leaving_time
+                        }
+                    )
 
             return JsonResponse({'status': 'success'})
         except Exception as e:
             logger.error("Error saving availability: %s", e)
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-    days = [timezone.now().date() + datetime.timedelta(days=i) for i in range(30)]
+    days = [timezone.now().date() + datetime.timedelta(days=i) for i in range(60)]
     availability = {day: Availability.objects.filter(user=request.user, date=day).first() for day in days}
 
     return render(request, 'barberapp/availability.html', {'days': days, 'availability': availability})
+
+
 
 
 def book_view(request):

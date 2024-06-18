@@ -156,10 +156,10 @@
                             <input type="checkbox" name="{{ day|date:"Y-m-d" }}_working" class="form-check-input" data-date="{{ day|date:"Y-m-d" }}" {% if availability_day and availability_day.working %}checked{% endif %} onchange="logChange(this)">
                         </td>
                         <td>
-                            <input type="time" name="{{ day|date:"Y-m-d" }}_arriving_time" class="form-control" value="{% if availability_day and availability_day.arriving_time %}{{ availability_day.arriving_time|default:"" }}{% else %}09:00{% endif %}" data-date="{{ day|date:"Y-m-d" }}" onchange="logChange(this)">
+                            <input type="time" name="{{ day|date:"Y-m-d" }}_arriving_time" class="form-control" value="{% if availability_day and availability_day.arriving_time %}{{ availability_day.arriving_time|time:"H:i" }}{% else %}09:00{% endif %}" data-date="{{ day|date:"Y-m-d" }}" onchange="logChange(this)">
                         </td>
                         <td>
-                            <input type="time" name="{{ day|date:"Y-m-d" }}_leaving_time" class="form-control" value="{% if availability_day and availability_day.leaving_time %}{{ availability_day.leaving_time|default:"" }}{% else %}17:00{% endif %}" data-date="{{ day|date:"Y-m-d" }}" onchange="logChange(this)">
+                            <input type="time" name="{{ day|date:"Y-m-d" }}_leaving_time" class="form-control" value="{% if availability_day and availability_day.leaving_time %}{{ availability_day.leaving_time|time:"H:i" }}{% else %}17:00{% endif %}" data-date="{{ day|date:"Y-m-d" }}" onchange="logChange(this)">
                         </td>
                     </tr>
                     {% endwith %}
