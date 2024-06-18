@@ -32,7 +32,8 @@ class Booking(models.Model):
     date = models.DateField()
     time = models.TimeField()
     customer_name = models.CharField(max_length=100)
-    customer_contact = models.CharField(max_length=100)
+    customer_email = models.EmailField(default='default@example.com')
+    customer_phone = models.CharField(max_length=15, default='+440000000000')
     staff = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):

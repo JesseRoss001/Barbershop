@@ -4,7 +4,15 @@
 <div class="container mt-5">
     <div class="container-max">
         <h2>Book an Appointment</h2>
-        <form method="POST" id="bookingForm">
+        <p>All fields are required.</p>
+        {% if messages %}
+        <div class="alert alert-dismissible fade show" role="alert">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <form method="POST" action="{% url 'submit_booking' %}" id="bookingForm">
             {% csrf_token %}
             <div class="mb-3">
                 <label for="service" class="form-label">Select Service</label>
@@ -20,6 +28,7 @@
                 <div id="availableDates" class="d-flex flex-wrap">
                     <!-- Dates will be populated here dynamically -->
                 </div>
+                <input type="hidden" id="date" name="date">
             </div>
             <div class="mb-3" id="timesContainer" style="display:none;">
                 <label for="time" class="form-label">Available Times</label>
@@ -33,8 +42,15 @@
                 <input type="text" class="form-control" id="customer_name" name="customer_name" required>
             </div>
             <div class="mb-3">
-                <label for="customer_contact" class="form-label">Customer Contact</label>
-                <input type="text" class="form-control" id="customer_contact" name="customer_contact" required>
+                <label for="customer_email" class="form-label">Customer Email</label>
+                <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+            </div>
+            <div class="mb-3">
+                <label for="customer_phone" class="form-label">Customer Phone</label>
+                <input type="text" class="form-control" id="customer_phone" name="customer_phone" pattern="^\+44\d{10}$" required>
+                <div class="invalid-feedback">
+                    Please provide a valid UK phone number.
+                </div>
             </div>
             <button type="submit" class="btn btn-primary">Book Appointment</button>
         </form>
@@ -42,36 +58,66 @@
 </div>
 
 <script>
+    function logMessage(message) {
+        console.log(`[LOG] ${message}`);
+    }
+    
     function loadAvailableDates() {
         const serviceId = document.getElementById('service').value;
-        if (!serviceId) return;
-
+        logMessage(`Selected Service ID: ${serviceId}`);
+        if (!serviceId) {
+            logMessage('No service selected, aborting date load.');
+            return;
+        }
+    
         fetch(`/get_available_dates?service_id=${serviceId}`)
-            .then(response => response.json())
+            .then(response => {
+                logMessage('Fetched available dates, processing response.');
+                return response.json();
+            })
             .then(data => {
                 const datesContainer = document.getElementById('availableDates');
                 datesContainer.innerHTML = '';
+                logMessage('Populating available dates.');
                 data.dates.forEach(date => {
+                    logMessage(`Processing date: ${date}`);
                     const dateElement = document.createElement('div');
-                    dateElement.className = 'date-box';
+                    dateElement.className = `date-box ${data.heatmap[date]}`;
                     dateElement.textContent = date;
-                    dateElement.onclick = () => loadAvailableTimes(date);
+                    dateElement.onclick = () => {
+                        document.getElementById('date').value = date;
+                        logMessage(`Date selected: ${date}`);
+                        loadAvailableTimes(date);
+                    };
                     datesContainer.appendChild(dateElement);
                 });
                 document.getElementById('datesContainer').style.display = 'block';
+                logMessage('Dates displayed.');
+            })
+            .catch(error => {
+                logMessage(`Error fetching dates: ${error}`);
             });
     }
-
+    
     function loadAvailableTimes(date) {
         const serviceId = document.getElementById('service').value;
-        if (!serviceId || !date) return;
-
+        logMessage(`Selected Service ID: ${serviceId}, Selected Date: ${date}`);
+        if (!serviceId || !date) {
+            logMessage('Service ID or date missing, aborting time load.');
+            return;
+        }
+    
         fetch(`/get_available_times?service_id=${serviceId}&date=${date}`)
-            .then(response => response.json())
+            .then(response => {
+                logMessage('Fetched available times, processing response.');
+                return response.json();
+            })
             .then(data => {
                 const timesContainer = document.getElementById('time');
                 timesContainer.innerHTML = '';
+                logMessage('Populating available times.');
                 data.times.forEach(timeSlot => {
+                    logMessage(`Processing time slot: ${timeSlot.time}, Staff: ${timeSlot.staff}`);
                     const option = document.createElement('option');
                     option.value = timeSlot.time;
                     option.textContent = `${timeSlot.time} (Staff: ${timeSlot.staff})`;
@@ -79,27 +125,72 @@
                     timesContainer.appendChild(option);
                 });
                 document.getElementById('timesContainer').style.display = 'block';
+                logMessage('Times displayed.');
+                // Automatically call updateStaffField if a time is pre-selected
+                updateStaffField();
+            })
+            .catch(error => {
+                logMessage(`Error fetching times: ${error}`);
             });
     }
-
+    
     function updateStaffField() {
         const selectedOption = document.getElementById('time').selectedOptions[0];
-        const staffId = selectedOption.dataset.staffId;
-        document.getElementById('staff').value = staffId;
+        if (selectedOption) {
+            const staffId = selectedOption.dataset.staffId;
+            document.getElementById('staff').value = staffId;
+            logMessage(`Selected Staff ID: ${staffId}`);
+        } else {
+            logMessage('No time slot selected.');
+        }
     }
-</script>
+    
+    document.getElementById('bookingForm').addEventListener('submit', function(event) {
+        const date = document.getElementById('date').value;
+        const time = document.getElementById('time').value;
+        const staff = document.getElementById('staff').value;
+        logMessage(`Submitting form with Date: ${date}, Time: ${time}, Staff: ${staff}`);
+        if (!date || !time || !staff) {
+            logMessage('Date, Time, or Staff not selected. Aborting form submission.');
+            event.preventDefault();
+        } else {
+            logMessage('Form submission proceeding.');
+        }
+    });
+    
+    function addInputChangeLogging() {
+        const inputs = document.querySelectorAll('#bookingForm input, #bookingForm select');
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                logMessage(`Field changed: ${input.name}, New Value: ${input.value}`);
+            });
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        addInputChangeLogging();
+    });
+    </script>
 
 <style>
+    main { background-color: black; }
     .date-box {
         padding: 10px;
         margin: 5px;
-        background-color: #f0f0f0;
-        border: 1px solid #ddd;
+        border-radius: 5px;
         cursor: pointer;
     }
-    .date-box:hover {
-        background-color: #ddd;
+    .date-box.green {
+        background-color: #d4edda;
     }
-    main {background-color: black;}
+    .date-box.yellow {
+        background-color: #fff3cd;
+    }
+    .date-box.red {
+        background-color: #f8d7da;
+    }
+    .date-box:hover {
+        background-color: #ccc;
+    }
 </style>
 {% endblock %}

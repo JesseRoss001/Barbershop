@@ -20,5 +20,6 @@ urlpatterns = [
     path('book/', views.book_view, name='book_view'),
     path('get_available_dates/', views.get_available_dates, name='get_available_dates'),
     path('get_available_times/', views.get_available_times, name='get_available_times'),
-    path('book/submit/', views.submit_booking, name='submit_booking'),
+    path('submit_booking/', views.submit_booking, name='submit_booking'),
 ]
+

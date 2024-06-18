@@ -15,6 +15,7 @@ from django.utils import timezone
 import datetime
 from datetime import timedelta
 from django.views.decorators.csrf import csrf_exempt
+import re
 
 
 # Setting up logging
@@ -134,7 +135,6 @@ def staff_availability(request):
     availability = {day: Availability.objects.filter(user=request.user, date=day).first() for day in days}
 
     return render(request, 'barberapp/availability.html', {'days': days, 'availability': availability})
-
 def book_view(request):
     # Ensure the services are populated
     services = [
@@ -147,15 +147,27 @@ def book_view(request):
 
     services = Service.objects.all()
     return render(request, 'barberapp/book_appointment.html', {'services': services})
-
 def get_available_dates(request):
     service_id = request.GET.get('service_id')
     if not service_id:
-        return JsonResponse({'dates': []})
+        return JsonResponse({'dates': [], 'heatmap': {}})
 
     available_dates = Availability.objects.filter(working=True).values_list('date', flat=True).distinct()
     available_dates_list = list(available_dates)
-    return JsonResponse({'dates': available_dates_list})
+
+    # Heatmap colors logic
+    date_heatmap = {}
+    for date in available_dates_list:
+        slots = Availability.objects.filter(date=date, working=True).count()
+        if slots >= 5:
+            color = 'green'
+        elif 3 <= slots < 5:
+            color = 'yellow'
+        else:
+            color = 'red'
+        date_heatmap[str(date)] = color
+
+    return JsonResponse({'dates': available_dates_list, 'heatmap': date_heatmap})
 
 def get_available_times(request):
     service_id = request.GET.get('service_id')
@@ -182,33 +194,74 @@ def get_available_times(request):
             start_time += service.duration
 
     return JsonResponse({'times': available_times})
-
+@csrf_exempt
 def submit_booking(request):
     if request.method == 'POST':
+        logger.debug("Received POST data: %s", request.POST)
+
         service_id = request.POST.get('service')
         date_str = request.POST.get('date')
         time_str = request.POST.get('time')
         client_name = request.POST.get('customer_name')
-        client_contact = request.POST.get('customer_contact')
+        client_email = request.POST.get('customer_email')
+        client_phone = request.POST.get('customer_phone')
         staff_id = request.POST.get('staff')
 
-        service = Service.objects.get(id=service_id)
-        date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-        time = datetime.datetime.strptime(time_str, '%H:%M').time()
-        staff = Staff.objects.get(id=staff_id)
+        logger.debug("Service ID: %s, Date: %s, Time: %s, Customer Name: %s, Customer Email: %s, Customer Phone: %s, Staff ID: %s",
+                     service_id, date_str, time_str, client_name, client_email, client_phone, staff_id)
 
-        Booking.objects.create(
-            service=service,
-            date=date,
-            time=time,
-            customer_name=client_name,
-            customer_contact=client_contact,
-            staff=staff
-        )
-        return redirect('booking_success')
+        if not all([service_id, date_str, time_str, client_name, client_email, client_phone, staff_id]):
+            messages.error(request, 'All fields are required.')
+            logger.error('Form submission aborted. Missing required fields.')
+            return redirect('book_view')
 
+        try:
+            # Validate email and phone number
+            email_regex = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+            phone_regex = re.compile(r'^(?:\+44|0044|0)?[\s\-]?\(?\d{2,4}\)?[\s\-]?\d{3,4}[\s\-]?\d{3,4}$')
+
+            if not email_regex.match(client_email):
+                messages.error(request, 'Invalid email format.')
+                logger.error('Invalid email format: %s', client_email)
+                return redirect('book_view')
+
+            if not phone_regex.match(client_phone):
+                messages.error(request, 'Invalid phone number format. It must be a valid UK phone number.')
+                logger.error('Invalid phone number format: %s', client_phone)
+                return redirect('book_view')
+
+            service = Service.objects.get(id=service_id)
+            date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+            time = datetime.datetime.strptime(time_str, '%H:%M').time()
+            staff = Staff.objects.get(user__id=staff_id)
+
+            Booking.objects.create(
+                service=service,
+                date=date,
+                time=time,
+                customer_name=client_name,
+                customer_email=client_email,
+                customer_phone=client_phone,
+                staff=staff.user
+            )
+            messages.success(request, 'Your appointment has been booked successfully.')
+            logger.info('Booking created successfully: Service: %s, Date: %s, Time: %s, Customer: %s, Staff: %s',
+                        service.name, date, time, client_name, staff.name)
+            return redirect('booking_success')
+        except Service.DoesNotExist:
+            logger.error('Service with ID %s does not exist.', service_id)
+            messages.error(request, 'Selected service does not exist.')
+        except Staff.DoesNotExist:
+            logger.error('Staff with ID %s does not exist.', staff_id)
+            messages.error(request, 'Selected staff does not exist.')
+        except Exception as e:
+            logger.error("Error during booking submission: %s", e)
+            messages.error(request, 'An error occurred during booking. Please try again.')
+
+        return redirect('book_view')
+
+    services = Service.objects.all()
     return render(request, 'barberapp/book_appointment.html', {'services': services})
-
 def admin_dashboard(request):
     bookings = Booking.objects.filter(date_time__gte=timezone.now()).order_by('date_time')
     return render(request, 'barberapp/admin_dashboard.html', {'bookings': bookings})
