@@ -135,39 +135,79 @@ def staff_availability(request):
 
     return render(request, 'barberapp/availability.html', {'days': days, 'availability': availability})
 
-
-
-
 def book_view(request):
-    today = datetime.date.today()
-    next_30_days = [today + datetime.timedelta(days=i) for i in range(30)]
+    # Ensure the services are populated
+    services = [
+        {'name': 'Haircut', 'duration': timedelta(minutes=30)},
+        {'name': 'Beard', 'duration': timedelta(minutes=15)},
+        {'name': 'Dying Hair', 'duration': timedelta(hours=2, minutes=30)},
+    ]
+    for service_data in services:
+        Service.objects.update_or_create(name=service_data['name'], defaults={'duration': service_data['duration']})
+
     services = Service.objects.all()
-    available_times = {day: [] for day in next_30_days}
-    
-    for day in next_30_days:
-        for hour in range(9, 17):  # assuming business hours from 9 to 17
-            available_times[day].append(f"{hour}:00")
-    
-    context = {
-        'services': services,
-        'days': next_30_days,
-        'available_times': available_times
-    }
-    return render(request, 'barberapp/book_view.html', context)
+    return render(request, 'barberapp/book_appointment.html', {'services': services})
+
+def get_available_dates(request):
+    service_id = request.GET.get('service_id')
+    if not service_id:
+        return JsonResponse({'dates': []})
+
+    available_dates = Availability.objects.filter(working=True).values_list('date', flat=True).distinct()
+    available_dates_list = list(available_dates)
+    return JsonResponse({'dates': available_dates_list})
+
+def get_available_times(request):
+    service_id = request.GET.get('service_id')
+    date_str = request.GET.get('date')
+
+    if not service_id or not date_str:
+        return JsonResponse({'times': []})
+
+    service = Service.objects.get(id=service_id)
+    date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+
+    available_times = []
+    staff_availability = Availability.objects.filter(date=date, working=True)
+    for availability in staff_availability:
+        start_time = datetime.datetime.combine(date, availability.arriving_time)
+        end_time = datetime.datetime.combine(date, availability.leaving_time)
+
+        while start_time + service.duration <= end_time:
+            available_times.append({
+                'time': start_time.time().strftime('%H:%M'),
+                'staff': availability.user.username,
+                'staff_id': availability.user.id
+            })
+            start_time += service.duration
+
+    return JsonResponse({'times': available_times})
 
 def submit_booking(request):
     if request.method == 'POST':
         service_id = request.POST.get('service')
-        date_time = request.POST.get('date_time')
-        client_name = request.POST.get('client_name')
-        client_contact = request.POST.get('client_contact')
-        staff = Staff.objects.first()  # simplification; should choose based on availability
+        date_str = request.POST.get('date')
+        time_str = request.POST.get('time')
+        client_name = request.POST.get('customer_name')
+        client_contact = request.POST.get('customer_contact')
+        staff_id = request.POST.get('staff')
 
         service = Service.objects.get(id=service_id)
-        booking = Booking(client_name=client_name, client_contact=client_contact, service=service, staff=staff, date_time=date_time)
-        booking.save()
-        return HttpResponse("Booking successfully created!")
-    return redirect('book_view')
+        date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+        time = datetime.datetime.strptime(time_str, '%H:%M').time()
+        staff = Staff.objects.get(id=staff_id)
+
+        Booking.objects.create(
+            service=service,
+            date=date,
+            time=time,
+            customer_name=client_name,
+            customer_contact=client_contact,
+            staff=staff
+        )
+        return redirect('booking_success')
+
+    return render(request, 'barberapp/book_appointment.html', {'services': services})
 
 def admin_dashboard(request):
     bookings = Booking.objects.filter(date_time__gte=timezone.now()).order_by('date_time')

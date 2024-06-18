@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="container-max">
+        <h2>Book an Appointment</h2>
+        <form method="POST" id="bookingForm">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="service" class="form-label">Select Service</label>
+                <select class="form-select" id="service" name="service" onchange="loadAvailableDates()">
+                    <option value="">--Select Service--</option>
+                    {% for service in services %}
+                    <option value="{{ service.id }}">{{ service.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3" id="datesContainer" style="display:none;">
+                <label for="date" class="form-label">Available Dates</label>
+                <div id="availableDates" class="d-flex flex-wrap">
+                    <!-- Dates will be populated here dynamically -->
+                </div>
+            </div>
+            <div class="mb-3" id="timesContainer" style="display:none;">
+                <label for="time" class="form-label">Available Times</label>
+                <select class="form-select" id="time" name="time" onchange="updateStaffField()">
+                    <!-- Times will be populated here dynamically -->
+                </select>
+            </div>
+            <input type="hidden" id="staff" name="staff">
+            <div class="mb-3">
+                <label for="customer_name" class="form-label">Customer Name</label>
+                <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+            </div>
+            <div class="mb-3">
+                <label for="customer_contact" class="form-label">Customer Contact</label>
+                <input type="text" class="form-control" id="customer_contact" name="customer_contact" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Book Appointment</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function loadAvailableDates() {
+        const serviceId = document.getElementById('service').value;
+        if (!serviceId) return;
+
+        fetch(`/get_available_dates?service_id=${serviceId}`)
+            .then(response => response.json())
+            .then(data => {
+                const datesContainer = document.getElementById('availableDates');
+                datesContainer.innerHTML = '';
+                data.dates.forEach(date => {
+                    const dateElement = document.createElement('div');
+                    dateElement.className = 'date-box';
+                    dateElement.textContent = date;
+                    dateElement.onclick = () => loadAvailableTimes(date);
+                    datesContainer.appendChild(dateElement);
+                });
+                document.getElementById('datesContainer').style.display = 'block';
+            });
+    }
+
+    function loadAvailableTimes(date) {
+        const serviceId = document.getElementById('service').value;
+        if (!serviceId || !date) return;
+
+        fetch(`/get_available_times?service_id=${serviceId}&date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                const timesContainer = document.getElementById('time');
+                timesContainer.innerHTML = '';
+                data.times.forEach(timeSlot => {
+                    const option = document.createElement('option');
+                    option.value = timeSlot.time;
+                    option.textContent = `${timeSlot.time} (Staff: ${timeSlot.staff})`;
+                    option.dataset.staffId = timeSlot.staff_id;
+                    timesContainer.appendChild(option);
+                });
+                document.getElementById('timesContainer').style.display = 'block';
+            });
+    }
+
+    function updateStaffField() {
+        const selectedOption = document.getElementById('time').selectedOptions[0];
+        const staffId = selectedOption.dataset.staffId;
+        document.getElementById('staff').value = staffId;
+    }
+</script>
+
+<style>
+    .date-box {
+        padding: 10px;
+        margin: 5px;
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        cursor: pointer;
+    }
+    .date-box:hover {
+        background-color: #ddd;
+    }
+    main {background-color: black;}
+</style>
+{% endblock %}

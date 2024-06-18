@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 class Service(models.Model):
     name = models.CharField(max_length=100)
-    duration = models.DurationField(help_text="Duration of the service")
+    duration = models.DurationField()
 
     def __str__(self):
         return self.name
@@ -28,14 +28,15 @@ class Staff(models.Model):
         return self.name
 
 class Booking(models.Model):
-    client_name = models.CharField(max_length=100)
-    client_contact = models.CharField(max_length=100)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
-    date_time = models.DateTimeField()
+    date = models.DateField()
+    time = models.TimeField()
+    customer_name = models.CharField(max_length=100)
+    customer_contact = models.CharField(max_length=100)
+    staff = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"Booking for {self.client_name} with {self.staff.name} on {self.date_time}"
+        return f"{self.service.name} for {self.customer_name} on {self.date} at {self.time} with {self.staff.username}"
 
 class GalleryImage(models.Model):
     image = models.ImageField(upload_to='gallery/')

@@ -11,9 +11,8 @@ class StaffAdmin(admin.ModelAdmin):
     list_display = ('name', 'email', 'phone_number')
 
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('client_name', 'service', 'staff', 'date_time', 'client_contact')
-    list_filter = ('date_time', 'service', 'staff')
-    search_fields = ['client_name', 'client_contact']
+    list_display = ('customer_name', 'service', 'date', 'time', 'customer_contact', 'staff')
+    list_filter = ('date', 'staff', 'service')
 
 admin.site.register(Service)
 admin.site.register(Staff, StaffAdmin)

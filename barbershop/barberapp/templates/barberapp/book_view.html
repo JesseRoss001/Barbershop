@@ -1,102 +1,21 @@
 {% extends 'base.html' %}
+
 {% block content %}
-
-<style>
-    body, html {
-        font-family: 'Roboto', sans-serif;
-        color: #fff;
-        background-color: #1a1a1a; /* Ensures that everything has a dark theme */
-    }
-
-    h1 {
-        text-align: center;
-        color: #fff;
-        margin-bottom: 20px; /* Gives more space around the title */
-    }
-
-    .day {
-        background-color: #333;
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Adds depth with shadow */
-    }
-
-    .day strong {
-        display: block;
-        text-align: center;
-        color: #fff;
-        margin-bottom: 15px; /* More space above the form */
-    }
-
-    form {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    label {
-        color: #ccc;
-    }
-
-    select, input {
-        padding: 10px;
-        border-radius: 5px;
-        border: 1px solid #555;
-        background: #222;
-        color: white;
-    }
-
-    button {
-        background-color: #4CAF50;
-        color: #fff;
-        border: none;
-        padding: 10px;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        width: 100%; /* Ensures the button extends the full width of the form */
-    }
-
-    button:hover {
-        background-color: #367c39;
-    }
-
-    @media (max-width: 768px) {
-        .day {
-            margin-bottom: 10px; /* More vertical space between items on smaller screens */
-        }
-    }
-</style>
-
-<h1>Book an Appointment</h1>
-
-<div class="container">
-    <div class="row">
-    {% for day in days %}
-        <div class="col-md-4 col-sm-6 col-12 mb-3">
-            <div class="day">
-                <strong>{{ day|date:"D, M d" }}</strong>
-                {% for time in available_times.day %}
-                <form method="post" action="{% url 'submit_booking' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="date_time" value="{{ day }} {{ time }}">
-                    <div>
-                        <label for="service"><i class="bi bi-scissors"></i> Service:</label>
-                        <select name="service" id="service">
-                            {% for service in services %}
-                            <option value="{{ service.id }}">{{ service.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <input type="text" name="client_name" placeholder="Your Name" required>
-                    <input type="text" name="client_contact" placeholder="Contact Number" required>
-                    <button type="submit">Book at {{ time }}</button>
-                </form>
-                {% endfor %}
+<div class="container mt-5">
+    <div class="container-max">
+        <h2>Available Slots</h2>
+        <div id="availableSlots">
+            {% for day in days %}
+            <div class="day-slots">
+                <h3>{{ day|date:"F j, Y" }}</h3>
+                <ul>
+                    {% for slot in available_times|get_item:day %}
+                    <li>{{ slot.time }} with {{ slot.staff }}</li>
+                    {% endfor %}
+                </ul>
             </div>
+            {% endfor %}
         </div>
-    {% endfor %}
     </div>
 </div>
-
 {% endblock %}

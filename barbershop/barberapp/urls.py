@@ -5,8 +5,6 @@ from . import views
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('book/', views.book_view, name='book_view'),
-    path('book/submit/', views.submit_booking, name='submit_booking'),
     path('admin/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('about/', views.about, name='about'),
     path('blog/', views.blog, name='blog'),
@@ -19,4 +17,8 @@ urlpatterns = [
     path('reset/<uidb64>/<token>/', views.CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='barberapp/password_reset_complete.html'), name='password_reset_complete'),
     path('logout/', custom_logout_view, name='logout'),
+    path('book/', views.book_view, name='book_view'),
+    path('get_available_dates/', views.get_available_dates, name='get_available_dates'),
+    path('get_available_times/', views.get_available_times, name='get_available_times'),
+    path('book/submit/', views.submit_booking, name='submit_booking'),
 ]
