@@ -47,9 +47,9 @@
             </div>
             <div class="mb-3">
                 <label for="customer_phone" class="form-label">Customer Phone</label>
-                <input type="text" class="form-control" id="customer_phone" name="customer_phone" pattern="^\+44\d{10}$" required>
+                <input type="text" class="form-control" id="customer_phone" name="customer_phone" pattern="^\+?\d{10,15}$" required>
                 <div class="invalid-feedback">
-                    Please provide a valid UK phone number.
+                    Please provide a valid phone number.
                 </div>
             </div>
             <button type="submit" class="btn btn-primary">Book Appointment</button>
@@ -61,7 +61,7 @@
     function logMessage(message) {
         console.log(`[LOG] ${message}`);
     }
-    
+
     function loadAvailableDates() {
         const serviceId = document.getElementById('service').value;
         logMessage(`Selected Service ID: ${serviceId}`);
@@ -69,12 +69,9 @@
             logMessage('No service selected, aborting date load.');
             return;
         }
-    
+
         fetch(`/get_available_dates?service_id=${serviceId}`)
-            .then(response => {
-                logMessage('Fetched available dates, processing response.');
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 const datesContainer = document.getElementById('availableDates');
                 datesContainer.innerHTML = '';
@@ -98,7 +95,7 @@
                 logMessage(`Error fetching dates: ${error}`);
             });
     }
-    
+
     function loadAvailableTimes(date) {
         const serviceId = document.getElementById('service').value;
         logMessage(`Selected Service ID: ${serviceId}, Selected Date: ${date}`);
@@ -106,17 +103,14 @@
             logMessage('Service ID or date missing, aborting time load.');
             return;
         }
-    
+
         fetch(`/get_available_times?service_id=${serviceId}&date=${date}`)
-            .then(response => {
-                logMessage('Fetched available times, processing response.');
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 const timesContainer = document.getElementById('time');
                 timesContainer.innerHTML = '';
                 logMessage('Populating available times.');
-                data.times.forEach(timeSlot => {
+                data.available_times[date].forEach(timeSlot => {
                     logMessage(`Processing time slot: ${timeSlot.time}, Staff: ${timeSlot.staff}`);
                     const option = document.createElement('option');
                     option.value = timeSlot.time;
@@ -133,7 +127,7 @@
                 logMessage(`Error fetching times: ${error}`);
             });
     }
-    
+
     function updateStaffField() {
         const selectedOption = document.getElementById('time').selectedOptions[0];
         if (selectedOption) {
@@ -144,7 +138,7 @@
             logMessage('No time slot selected.');
         }
     }
-    
+
     document.getElementById('bookingForm').addEventListener('submit', function(event) {
         const date = document.getElementById('date').value;
         const time = document.getElementById('time').value;
@@ -157,7 +151,7 @@
             logMessage('Form submission proceeding.');
         }
     });
-    
+
     function addInputChangeLogging() {
         const inputs = document.querySelectorAll('#bookingForm input, #bookingForm select');
         inputs.forEach(input => {
@@ -166,11 +160,11 @@
             });
         });
     }
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         addInputChangeLogging();
     });
-    </script>
+</script>
 
 <style>
     main { background-color: black; }

@@ -5,11 +5,11 @@
     <div class="container-max">
         <h2>Available Slots</h2>
         <div id="availableSlots">
-            {% for day in days %}
+            {% for day, slots in available_times.items %}
             <div class="day-slots">
                 <h3>{{ day|date:"F j, Y" }}</h3>
                 <ul>
-                    {% for slot in available_times|get_item:day %}
+                    {% for slot in slots %}
                     <li>{{ slot.time }} with {{ slot.staff }}</li>
                     {% endfor %}
                 </ul>

@@ -31,6 +31,7 @@ class Booking(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     date = models.DateField()
     time = models.TimeField()
+    end_time = models.TimeField(default='00:00')  # Add a default value
     customer_name = models.CharField(max_length=100)
     customer_email = models.EmailField(default='default@example.com')
     customer_phone = models.CharField(max_length=15, default='+440000000000')

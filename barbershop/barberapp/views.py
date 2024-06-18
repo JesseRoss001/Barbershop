@@ -12,8 +12,8 @@ from django.contrib import messages
 from .forms import CustomUserCreationForm  # Import the custom form
 from .models import Booking, Service, Staff, Availability, GalleryImage
 from django.utils import timezone
-import datetime
-from datetime import timedelta
+from datetime import timedelta, datetime
+
 from django.views.decorators.csrf import csrf_exempt
 import re
 
@@ -100,7 +100,7 @@ def staff_availability(request):
                 if key.endswith('_working'):
                     date_str = key.replace('_working', '')
                     logger.debug("Processing date: %s", date_str)
-                    date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+                    date = datetime.strptime(date_str, '%Y-%m-%d').date()
                     working = value == 'on'
                     arriving_time_str = data.get(f'{date_str}_arriving_time', '')
                     leaving_time_str = data.get(f'{date_str}_leaving_time', '')
@@ -110,9 +110,9 @@ def staff_availability(request):
 
                     if working:
                         if arriving_time_str:
-                            arriving_time = datetime.datetime.strptime(arriving_time_str, '%H:%M').time()
+                            arriving_time = datetime.strptime(arriving_time_str, '%H:%M').time()
                         if leaving_time_str:
-                            leaving_time = datetime.datetime.strptime(leaving_time_str, '%H:%M').time()
+                            leaving_time = datetime.strptime(leaving_time_str, '%H:%M').time()
                         if arriving_time is None or leaving_time is None:
                             return JsonResponse({'status': 'error', 'message': 'Arriving and leaving times must be set if working is checked.'}, status=400)
 
@@ -131,16 +131,16 @@ def staff_availability(request):
             logger.error("Error saving availability: %s", e)
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-    days = [timezone.now().date() + datetime.timedelta(days=i) for i in range(60)]
+    days = [timezone.now().date() + timedelta(days=i) for i in range(60)]
     availability = {day: Availability.objects.filter(user=request.user, date=day).first() for day in days}
 
     return render(request, 'barberapp/availability.html', {'days': days, 'availability': availability})
 def book_view(request):
-    # Ensure the services are populated
     services = [
         {'name': 'Haircut', 'duration': timedelta(minutes=30)},
         {'name': 'Beard', 'duration': timedelta(minutes=15)},
         {'name': 'Dying Hair', 'duration': timedelta(hours=2, minutes=30)},
+        {'name': 'Combo Hair and Beard', 'duration': timedelta(minutes=40)}
     ]
     for service_data in services:
         Service.objects.update_or_create(name=service_data['name'], defaults={'duration': service_data['duration']})
@@ -151,6 +151,9 @@ def get_available_dates(request):
     service_id = request.GET.get('service_id')
     if not service_id:
         return JsonResponse({'dates': [], 'heatmap': {}})
+
+    service = Service.objects.get(id=service_id)
+    service_duration = service.duration  # Duration of the selected service
 
     available_dates = Availability.objects.filter(working=True).values_list('date', flat=True).distinct()
     available_dates_list = list(available_dates)
@@ -168,32 +171,6 @@ def get_available_dates(request):
         date_heatmap[str(date)] = color
 
     return JsonResponse({'dates': available_dates_list, 'heatmap': date_heatmap})
-
-def get_available_times(request):
-    service_id = request.GET.get('service_id')
-    date_str = request.GET.get('date')
-
-    if not service_id or not date_str:
-        return JsonResponse({'times': []})
-
-    service = Service.objects.get(id=service_id)
-    date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-
-    available_times = []
-    staff_availability = Availability.objects.filter(date=date, working=True)
-    for availability in staff_availability:
-        start_time = datetime.datetime.combine(date, availability.arriving_time)
-        end_time = datetime.datetime.combine(date, availability.leaving_time)
-
-        while start_time + service.duration <= end_time:
-            available_times.append({
-                'time': start_time.time().strftime('%H:%M'),
-                'staff': availability.user.username,
-                'staff_id': availability.user.id
-            })
-            start_time += service.duration
-
-    return JsonResponse({'times': available_times})
 @csrf_exempt
 def submit_booking(request):
     if request.method == 'POST':
@@ -231,14 +208,32 @@ def submit_booking(request):
                 return redirect('book_view')
 
             service = Service.objects.get(id=service_id)
-            date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-            time = datetime.datetime.strptime(time_str, '%H:%M').time()
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            time = datetime.strptime(time_str, '%H:%M').time()
             staff = Staff.objects.get(user__id=staff_id)
+
+            start_time = datetime.combine(date, time)
+            end_time = start_time + service.duration
+
+            # Check for overlapping bookings
+            overlapping_booking = Booking.objects.filter(
+                date=date,
+                staff=staff.user,
+                time__lt=end_time.time(),
+                end_time__gt=start_time.time()
+            ).exists()
+
+            if overlapping_booking:
+                messages.error(request, 'This time slot is already booked.')
+                logger.error('Double booking attempt: Service: %s, Date: %s, Time: %s, Staff: %s',
+                             service.name, date, time, staff.name)
+                return redirect('book_view')
 
             Booking.objects.create(
                 service=service,
                 date=date,
                 time=time,
+                end_time=end_time.time(),
                 customer_name=client_name,
                 customer_email=client_email,
                 customer_phone=client_phone,
@@ -262,6 +257,48 @@ def submit_booking(request):
 
     services = Service.objects.all()
     return render(request, 'barberapp/book_appointment.html', {'services': services})
+def get_available_times(request):
+    service_id = request.GET.get('service_id')
+    date_str = request.GET.get('date')
+
+    if not service_id or not date_str:
+        return JsonResponse({'times': []})
+
+    service = Service.objects.get(id=service_id)
+    service_duration = service.duration  # Duration of the selected service
+    date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+    available_times = {}
+    staff_availability = Availability.objects.filter(date=date, working=True)
+    for availability in staff_availability:
+        start_time = datetime.combine(date, availability.arriving_time)
+        end_time = datetime.combine(date, availability.leaving_time)
+
+        while start_time + service_duration <= end_time:
+            end_slot_time = start_time + service_duration
+
+            # Check if the time slot is already booked
+            overlapping_booking = Booking.objects.filter(
+                date=date,
+                staff=availability.user,
+                time__lt=end_slot_time.time(),
+                end_time__gt=start_time.time()
+            ).exists()
+
+            if not overlapping_booking:
+                date_str = date.strftime('%Y-%m-%d')
+                if date_str not in available_times:
+                    available_times[date_str] = []
+                available_times[date_str].append({
+                    'time': start_time.time().strftime('%H:%M'),
+                    'staff': availability.user.username,
+                    'staff_id': availability.user.id
+                })
+
+            start_time += timedelta(minutes=5)  # Check every 5 minutes to find fitting slots
+
+    return JsonResponse({'available_times': available_times})
+
 def admin_dashboard(request):
     bookings = Booking.objects.filter(date_time__gte=timezone.now()).order_by('date_time')
     return render(request, 'barberapp/admin_dashboard.html', {'bookings': bookings})
