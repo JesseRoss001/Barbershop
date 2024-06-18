@@ -13,6 +13,7 @@ from .forms import CustomUserCreationForm  # Import the custom form
 from .models import Booking, Service, Staff, Availability, GalleryImage
 from django.utils import timezone
 from datetime import timedelta, datetime
+from .utils import send_email, send_sms 
 
 from django.views.decorators.csrf import csrf_exempt
 import re
@@ -239,6 +240,15 @@ def submit_booking(request):
                 customer_phone=client_phone,
                 staff=staff.user
             )
+
+            # Send Email
+            email_content = f"Dear {client_name},\nYour booking for {service.name} on {date_str} at {time_str} is confirmed."
+            send_email(client_email, "Booking Confirmation", email_content)
+
+            # Send SMS
+            sms_content = f"Dear {client_name}, your booking for {service.name} on {date_str} at {time_str} is confirmed."
+            send_sms(client_phone, sms_content)
+
             messages.success(request, 'Your appointment has been booked successfully.')
             logger.info('Booking created successfully: Service: %s, Date: %s, Time: %s, Customer: %s, Staff: %s',
                         service.name, date, time, client_name, staff.name)
