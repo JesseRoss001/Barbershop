@@ -1,59 +1,63 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="container-max">
-        <h2>Book an Appointment</h2>
-        <p>All fields are required.</p>
-        {% if messages %}
-        <div class="alert alert-dismissible fade show" role="alert">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
+<div class="container  my-5 py-5">
+    <div class="card border-primary">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Book an Appointment</h2>
         </div>
-        {% endif %}
-        <form method="POST" action="{% url 'submit_booking' %}" id="bookingForm">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label for="service" class="form-label">Select Service</label>
-                <select class="form-select" id="service" name="service" onchange="loadAvailableDates()">
-                    <option value="">--Select Service--</option>
-                    {% for service in services %}
-                    <option value="{{ service.id }}">{{ service.name }}</option>
-                    {% endfor %}
-                </select>
+        <div class="card-body">
+            <p>All fields are required.</p>
+            {% if messages %}
+            <div class="alert alert-dismissible fade show" role="alert">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
+                {% endfor %}
             </div>
-            <div class="mb-3" id="datesContainer" style="display:none;">
-                <label for="date" class="form-label">Available Dates</label>
-                <div id="availableDates" class="d-flex flex-wrap">
-                    <!-- Dates will be populated here dynamically -->
+            {% endif %}
+            <form method="POST" action="{% url 'submit_booking' %}" id="bookingForm" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="service" class="form-label">Select Service</label>
+                    <select class="form-select" id="service" name="service" required onchange="loadAvailableDates()">
+                        <option value="">--Select Service--</option>
+                        {% for service in services %}
+                        <option value="{{ service.id }}">{{ service.name }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <input type="hidden" id="date" name="date">
-            </div>
-            <div class="mb-3" id="timesContainer" style="display:none;">
-                <label for="time" class="form-label">Available Times</label>
-                <select class="form-select" id="time" name="time" onchange="updateStaffField()">
-                    <!-- Times will be populated here dynamically -->
-                </select>
-            </div>
-            <input type="hidden" id="staff" name="staff">
-            <div class="mb-3">
-                <label for="customer_name" class="form-label">Customer Name</label>
-                <input type="text" class="form-control" id="customer_name" name="customer_name" required>
-            </div>
-            <div class="mb-3">
-                <label for="customer_email" class="form-label">Customer Email</label>
-                <input type="email" class="form-control" id="customer_email" name="customer_email" required>
-            </div>
-            <div class="mb-3">
-                <label for="customer_phone" class="form-label">Customer Phone</label>
-                <input type="text" class="form-control" id="customer_phone" name="customer_phone" pattern="^\+?\d{10,15}$" required>
-                <div class="invalid-feedback">
-                    Please provide a valid phone number.
+                <div class="mb-3" id="datesContainer" style="display:none;">
+                    <label for="date" class="form-label">Available Dates</label>
+                    <div id="availableDates" class="d-flex flex-wrap">
+                        <!-- Dates will be populated here dynamically -->
+                    </div>
+                    <input type="hidden" id="date" name="date" required>
                 </div>
-            </div>
-            <button type="submit" class="btn btn-primary">Book Appointment</button>
-        </form>
+                <div class="mb-3" id="timesContainer" style="display:none;">
+                    <label for="time" class="form-label">Available Times</label>
+                    <select class="form-select" id="time" name="time" required onchange="updateStaffField()">
+                        <!-- Times will be populated here dynamically -->
+                    </select>
+                </div>
+                <input type="hidden" id="staff" name="staff" required>
+                <div class="mb-3">
+                    <label for="customer_name" class="form-label">Customer Name</label>
+                    <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="customer_email" class="form-label">Customer Email</label>
+                    <input type="email" class="form-control" id="customer_email" name="customer_email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="customer_phone" class="form-label">Customer Phone</label>
+                    <input type="text" class="form-control" id="customer_phone" name="customer_phone" pattern="^\+?\d{10,15}$" required>
+                    <div class="invalid-feedback">
+                        Please provide a valid phone number.
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Book Appointment</button>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -167,24 +171,130 @@
 </script>
 
 <style>
-    main { background-color: black; }
-    .date-box {
-        padding: 10px;
-        margin: 5px;
-        border-radius: 5px;
-        cursor: pointer;
+/* Base styling for background and text colors */
+body, html {
+    background-color: #262626; /* Dark gray background */
+    color: #f0f0f0; /* Light gray text color for readability */
+    font-family: 'Arial', sans-serif; /* Modern font for clean look */
+}
+
+main {background-color: black;}
+
+/* Styling for container */
+.container {
+    padding: 40px; /* Spacious padding for airy feel */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5); /* Subtle shadow for depth */
+    
+}
+
+/* Card styling */
+.card {
+    background-color: #333; /* Darker background for card */
+    border-color: #444; /* Slightly lighter border for subtle contrast */
+}
+
+.card-header {
+    background-color: #222; /* Even darker shade for header */
+    border-bottom: 1px solid #444; /* Solid border to distinguish from card body */
+}
+
+.card-body {
+    padding: 20px; /* Comfortable padding inside card */
+}
+
+/* Form elements general styling */
+.form-label {
+    color: #ccc; /* Light grey color for labels */
+    font-weight: bold; /* Bold font for better visibility */
+    margin-bottom: 8px; /* Space below labels */
+}
+
+.form-control, .form-select {
+    background-color: #222; /* Dark background for input fields */
+    color: #fff; /* White text color */
+    border: 1px solid #555; /* Slightly lighter border for visibility */
+    padding: 10px; /* Padding for inputs */
+    margin-bottom: 15px; /* Margin below each input for spacing */
+    transition: border-color 0.3s; /* Smooth transition for interactions */
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #007bff; /* Bootstrap primary color for focus */
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25); /* Glow effect for focus */
+}
+
+/* Button styling */
+.btn-primary {
+    background-color: #0062cc; /* Bootstrap primary dark blue */
+    border-color: #005cbf; /* Slightly darker border for 3D effect */
+    padding: 10px 20px; /* Padding for larger click area */
+    text-transform: uppercase; /* Uppercase text for a more formal appearance */
+    transition: background-color 0.3s, transform 0.3s; /* Smooth transitions for hover effects */
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+    transform: translateY(-2px); /* Slight raise to indicate interactivity */
+}
+
+/* Feedback and alert styling */
+.alert {
+    padding: 15px; /* Spacious padding for alerts */
+    margin-bottom: 20px; /* Space below alerts */
+    border: 1px solid transparent; /* Transparent border */
+    border-radius: 4px; /* Rounded corners for alerts */
+}
+
+.alert-success {
+    background-color: #28a745; /* Success green */
+    color: #fff; /* White text for contrast */
+    border-color: #28a745; /* Matching border color */
+}
+
+.invalid-feedback {
+    color: #dc3545; /* Bootstrap danger color for errors */
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px; /* Smaller padding on smaller screens */
     }
-    .date-box.green {
-        background-color: #d4edda;
+
+    .form-control, .form-select {
+        padding: 8px; /* Smaller padding in form elements on small devices */
     }
-    .date-box.yellow {
-        background-color: #fff3cd;
+
+    .btn-primary {
+        padding: 8px 16px; /* Smaller button padding on small devices */
     }
-    .date-box.red {
-        background-color: #f8d7da;
-    }
-    .date-box:hover {
-        background-color: #ccc;
-    }
+}
+
+/* Custom date box styles for dynamic elements */
+.date-box {
+    padding: 10px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    background-color: #444; /* Darker background for date boxes */
+    color: #ccc; /* Light text color for readability */
+    transition: background-color 0.3s; /* Transition for hover effect */
+}
+
+.date-box:hover {
+    background-color: #555; /* Lighter on hover */
+}
+
+/* Utility classes for extra spacing and customization */
+.py-5 {
+    padding-top: 3rem; /* Top padding */
+    padding-bottom: 3rem; /* Bottom padding */
+}
+
+.mb-3 {
+    margin-bottom: 1rem; /* Consistent bottom margin */
+}
 </style>
 {% endblock %}
