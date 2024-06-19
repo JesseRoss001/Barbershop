@@ -14,8 +14,12 @@ class BookingAdmin(admin.ModelAdmin):
     list_display = ('customer_name', 'service', 'date', 'time', 'customer_email', 'customer_phone', 'staff')
     list_filter = ('date', 'staff', 'service')
 
+class GalleryImageAdmin(admin.ModelAdmin):
+    list_display = ('caption', 'service', 'staff', 'price', 'duration')
+    list_filter = ('service', 'staff')
+
 admin.site.register(Service)
 admin.site.register(Staff, StaffAdmin)
 admin.site.register(Availability, AvailabilityAdmin)
 admin.site.register(Booking, BookingAdmin)
-admin.site.register(GalleryImage)
+admin.site.register(GalleryImage, GalleryImageAdmin)

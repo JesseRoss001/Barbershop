@@ -3,14 +3,51 @@
 {% block content %}
 <div class="container mt-5">
     <div class="container-max">
-        <h2>Our Gallery</h2>
-        <div class="row">
+        <h2 class="text-center">Our Gallery</h2>
+        <div class="gallery-grid">
             {% for image in images %}
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <img src="{{ image.image.url }}" class="card-img-top" alt="{{ image.caption }}">
-                    <div class="card-body">
-                        <p class="card-text">{{ image.caption }}</p>
+            <div class="gallery-item" id="galleryCard{{ image.id }}">
+                <img src="{{ image.image.url }}" class="img-fluid" alt="{{ image.caption }}">
+                <div class="gallery-info">
+                    <p class="card-text">{{ image.caption }}</p>
+                    <p><strong>Service:</strong> {{ image.service.name }}</p>
+                    <p><strong>Staff:</strong> {{ image.staff.name }}</p>
+                    {% if image.price %}
+                    <p><strong>Price:</strong> £{{ image.price }}</p>
+                    {% endif %}
+                    {% if image.duration %}
+                    <p><strong>Duration:</strong> {{ image.duration }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Modal for mobile view -->
+            <div class="modal fade" id="imageModal{{ image.id }}" tabindex="-1" aria-labelledby="imageModalLabel{{ image.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="imageModalLabel{{ image.id }}">{{ image.caption }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <img src="{{ image.image.url }}" class="img-fluid" alt="{{ image.caption }}">
+                            <p><strong>Service:</strong> {{ image.service.name }}</p>
+                            <p><strong>Staff:</strong> {{ image.staff.name }}</p>
+                            {% if image.price %}
+                            <p><strong>Price:</strong> £{{ image.price }}</p>
+                            {% endif %}
+                            {% if image.duration %}
+                            <p><strong>Duration:</strong> {{ image.duration }}</p>
+                            {% endif %}
+                            <div class="modal-navigation">
+                                {% if image.id > 1 %}
+                                <button type="button" class="btn btn-primary" id="prev{{ image.id }}" onclick="navigateModal({{ image.id }}, 'prev')">&larr; Previous</button>
+                                {% endif %}
+                                {% if image.id < images|length %}
+                                <button type="button" class="btn btn-primary" id="next{{ image.id }}" onclick="navigateModal({{ image.id }}, 'next')">Next &rarr;</button>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -18,4 +55,77 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const galleryCards = document.querySelectorAll('.gallery-item');
+        galleryCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const modalId = '#imageModal' + this.id.replace('galleryCard', '');
+                const modal = new bootstrap.Modal(document.querySelector(modalId));
+                modal.show();
+            });
+        });
+
+        // Masonry layout adjustment
+        window.addEventListener('load', function() {
+            const grid = document.querySelector('.gallery-grid');
+            const masonry = new Masonry(grid, {
+                itemSelector: '.gallery-item',
+                columnWidth: '.gallery-item',
+                percentPosition: true
+            });
+        });
+    });
+
+    function navigateModal(currentId, direction) {
+        const totalImages = {{ images|length }};
+        let newId = direction === 'prev' ? currentId - 1 : currentId + 1;
+
+        if (newId < 1) {
+            newId = totalImages;
+        } else if (newId > totalImages) {
+            newId = 1;
+        }
+
+        const newModalId = '#imageModal' + newId;
+        const newModal = new bootstrap.Modal(document.querySelector(newModalId));
+        newModal.show();
+    }
+</script>
+
+<style>
+    main { color: black; }
+    .gallery-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+    .gallery-item {
+        position: relative;
+        width: 100%;
+        max-width: 300px;
+        margin: 5px;
+        overflow: hidden;
+    }
+    .gallery-info {
+        display: none;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        padding: 10px;
+    }
+    .modal-content {
+        border-radius: 0 !important;
+    }
+    .modal-navigation {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+    }
+</style>
 {% endblock %}
